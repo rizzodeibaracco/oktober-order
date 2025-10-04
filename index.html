@@ -1,61 +1,193 @@
 <!doctype html>
 <html lang="it">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Oktober Orders</title>
-  <link rel="stylesheet" href="styles.css" />
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-</head>
-<body>
-  <header class="container">
-    <h1>Oktober Orders</h1>
-  </header>
-  <main class="container">
-    <section class="card">
-      <h2>Nuovo ordine</h2>
-      <form id="order-form">
-        <label>Nome cameriere <input type="text" id="waiter" required></label>
-        <label style="font-size:1.3rem;">Numero tavolo <input type="number" id="table" style="font-size:1.3rem;padding:10px" required></label>
-        <h3>Bevande</h3>
-        <div class="item"><div class="item-title">Birra bionda 0,5 L (6 €)</div><div class="qty-controls"><button type="button" class="btn round accent" data-target="q_bionda_05" data-delta="-1">-</button><span id="q_bionda_05" class="qty-display">0</span><button type="button" class="btn round primary" data-target="q_bionda_05" data-delta="1">+</button></div></div>
-        <div class="item"><div class="item-title">Birra bionda 1 L (11 €)</div><div class="qty-controls"><button type="button" class="btn round accent" data-target="q_bionda_1" data-delta="-1">-</button><span id="q_bionda_1" class="qty-display">0</span><button type="button" class="btn round primary" data-target="q_bionda_1" data-delta="1">+</button></div></div>
-        <div class="item"><div class="item-title">Birra rossa 0,5 L (7 €)</div><div class="qty-controls"><button type="button" class="btn round accent" data-target="q_rossa_05" data-delta="-1">-</button><span id="q_rossa_05" class="qty-display">0</span><button type="button" class="btn round primary" data-target="q_rossa_05" data-delta="1">+</button></div></div>
-        <div class="item"><div class="item-title">Birra rossa 1 L (13 €)</div><div class="qty-controls"><button type="button" class="btn round accent" data-target="q_rossa_1" data-delta="-1">-</button><span id="q_rossa_1" class="qty-display">0</span><button type="button" class="btn round primary" data-target="q_rossa_1" data-delta="1">+</button></div></div>
-        <div class="item"><div class="item-title">Birra non filtrata 0,5 L (7 €)</div><div class="qty-controls"><button type="button" class="btn round accent" data-target="q_nf_05" data-delta="-1">-</button><span id="q_nf_05" class="qty-display">0</span><button type="button" class="btn round primary" data-target="q_nf_05" data-delta="1">+</button></div></div>
-        <div class="item"><div class="item-title">Birra non filtrata 1 L (13 €)</div><div class="qty-controls"><button type="button" class="btn round accent" data-target="q_nf_1" data-delta="-1">-</button><span id="q_nf_1" class="qty-display">0</span><button type="button" class="btn round primary" data-target="q_nf_1" data-delta="1">+</button></div></div>
-        <div class="item"><div class="item-title">Coca-Cola (4 €)</div><div class="qty-controls"><button type="button" class="btn round accent" data-target="q_cola" data-delta="-1">-</button><span id="q_cola" class="qty-display">0</span><button type="button" class="btn round primary" data-target="q_cola" data-delta="1">+</button></div></div>
-        <div class="item"><div class="item-title">Acqua naturale (2 €)</div><div class="qty-controls"><button type="button" class="btn round accent" data-target="q_nat" data-delta="-1">-</button><span id="q_nat" class="qty-display">0</span><button type="button" class="btn round primary" data-target="q_nat" data-delta="1">+</button></div></div>
-        <div class="item"><div class="item-title">Acqua frizzante (2 €)</div><div class="qty-controls"><button type="button" class="btn round accent" data-target="q_frizz" data-delta="-1">-</button><span id="q_frizz" class="qty-display">0</span><button type="button" class="btn round primary" data-target="q_frizz" data-delta="1">+</button></div></div>
-        <div class="total-line"><span>Totale ordine:</span><strong id="order-total">0 €</strong></div>
-        <button type="submit" class="btn primary large">➕ Aggiungi ordine</button>
-      </form>
-    </section>
-    <section class="card">
-      <h2>Ordini</h2>
-      <div class="filter">
-        <label>Filtro:
-          <select id="status-filter">
-            <option value="all">Tutti</option>
-            <option value="pending">In attesa</option>
-            <option value="ready">Pronti</option>
-            <option value="delivered">Consegnati</option>
-          </select>
-        </label>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Oktober Orders – GitHub Pages (Firestore)</title>
+    <style>
+      :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+      body { margin:0; background:#0b0f14; color:#e6eef8; }
+      .container { max-width: 1100px; margin: 0 auto; padding: 16px; }
+      h1 { margin: 8px 0 16px; }
+      .grid { display:grid; grid-template-columns:1fr; gap:16px; }
+      @media (min-width: 900px){ .grid{ grid-template-columns: 1fr 1fr; } }
+      .card { background:#111826; border:1px solid #1f2a3a; border-radius:16px; padding:16px; box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+      .card h2 { margin:0 0 8px; }
+      .row { display:flex; gap:8px; align-items:center; }
+      .input, select { width:100%; padding:10px; border-radius:12px; border:1px solid #1f2a3a; background:#0f1624; color:#e6eef8; }
+      .btn { padding:10px 14px; border-radius:12px; border:1px solid #2a3550; background:#1b2540; color:#e6eef8; cursor:pointer; }
+      .btn:hover { filter:brightness(1.1); }
+      .btn.danger { background:#3b1b1b; border-color:#5a2a2a; }
+      .total { font-weight:700; font-size:18px; }
+      .small { font-size:12px; opacity:.75; }
+      table { width:100%; border-collapse:collapse; }
+      th, td { padding:8px; border-bottom:1px solid #223048; text-align:left; vertical-align: top; }
+      .badge { padding: 4px 10px; border-radius: 999px; font-size: 12px; border:1px solid #2a3550; }
+      .status-wait { background:#2a2540; }
+      .status-ready { background:#1f4030; }
+      .status-done { background:#31402a; }
+      .muted { opacity:.65; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Oktober Orders – Sync (Firestore)</h1>
+      <div class="grid">
+        <div class="card">
+          <h2>Nuovo ordine</h2>
+          <div class="row">
+            <input id="waiterInput" class="input" placeholder="Nome cameriere" />
+            <input id="tableInput" class="input" placeholder="Tavolo" />
+          </div>
+          <div style="margin-top:12px;display:grid;grid-template-columns:1fr 110px;gap:8px;align-items:center">
+            <label>Birra bionda 0,5L <span class="small">(6€)</span></label><input id="qty-bionda05" type="number" min="0" class="input" value="0" />
+            <label>Birra bionda 1L <span class="small">(11€)</span></label><input id="qty-bionda1"  type="number" min="0" class="input" value="0" />
+            <label>Birra rossa 0,5L <span class="small">(7€)</span></label><input id="qty-rossa05"  type="number" min="0" class="input" value="0" />
+            <label>Birra rossa 1L <span class="small">(13€)</span></label><input id="qty-rossa1"   type="number" min="0" class="input" value="0" />
+            <label>Non filtrata 0,5L <span class="small">(7€)</span></label><input id="qty-nf05"     type="number" min="0" class="input" value="0" />
+            <label>Non filtrata 1L <span class="small">(13€)</span></label><input id="qty-nf1"      type="number" min="0" class="input" value="0" />
+            <label>Coca-Cola <span class="small">(4€)</span></label><input id="qty-cola"     type="number" min="0" class="input" value="0" />
+            <label>Acqua naturale <span class="small">(2€)</span></label><input id="qty-nat"      type="number" min="0" class="input" value="0" />
+            <label>Acqua frizzante <span class="small">(2€)</span></label><input id="qty-frizz"    type="number" min="0" class="input" value="0" />
+          </div>
+          <div class="row" style="justify-content:space-between;margin-top:12px">
+            <div id="totalBox" class="total">Totale: 0,00€</div>
+            <button id="addOrderBtn" type="button" class="btn">➕ Aggiungi ordine</button>
+          </div>
+          <p class="small muted" style="margin-top:10px">Suggerimento: apri questa pagina su più dispositivi. Gli ordini si vedranno in tempo reale.</p>
+        </div>
+
+        <div class="card">
+          <h2>Ordini</h2>
+          <div id="ordersLive"></div>
+          <div class="row" style="margin-top:12px;justify-content:flex-end">
+            <button id="clearAllBtn" type="button" class="btn danger">🧹 Svuota fine serata</button>
+          </div>
+        </div>
       </div>
-      <div id="orders-list"></div>
-    </section>
-    <section class="card">
-      <h2>Dashboard</h2>
-      <div class="kpi">Incasso totale: <span id="kpi-total" class="kpi-value">0 €</span></div>
-      <div class="kpi">In attesa: <span id="kpi-active" class="kpi-value">0</span></div>
-      <div class="kpi">Pronti: <span id="kpi-ready" class="kpi-value">0</span></div>
-      <div class="kpi">Consegnati: <span id="kpi-delivered" class="kpi-value">0</span></div>
-      <button id="clear-all" class="btn danger large">🗑️ Svuota fine serata</button>
-    </section>
-  </main>
-  <footer class="container"><small>© 2025 Oktober Orders</small></footer>
-  <script src="app.js"></script>
-</body>
+      <p class="small muted" style="margin-top:12px">
+        Hosting statico (GitHub Pages) + Firestore in tempo reale.
+      </p>
+    </div>
+
+    <!-- SCRIPT: config già inserita -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+      import {
+        getFirestore, collection, addDoc, onSnapshot, serverTimestamp,
+        query, orderBy, updateDoc, doc, deleteDoc, getDocs, writeBatch
+      } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+const firebaseConfig = {
+  "apiKey": "AIzaSyAZPR5tHdHgbfdhq77SERUBBsH3o3GlFro",
+  "authDomain": "oktoberfest-ordes.firebaseapp.com",
+  "projectId": "oktoberfest-ordes",
+  "storageBucket": "oktoberfest-ordes.firebasestorage.app",
+  "messagingSenderId": "836780488125",
+  "appId": "1:836780488125:web:a5d99be814b773c7f78ed4"
+};
+      const app = initializeApp(firebaseConfig);
+      const db  = getFirestore(app);
+
+      const PRICE = { bionda05:6, bionda1:11, rossa05:7, rossa1:13, nf05:7, nf1:13, cola:4, nat:2, frizz:2 };
+      const $ = (id) => document.getElementById(id);
+      const qNum = (id) => Number($(id)?.value || 0);
+      const inputs = ["bionda05","bionda1","rossa05","rossa1","nf05","nf1","cola","nat","frizz"];
+
+      function calcTotal(){
+        const total = inputs.reduce((s,k)=> s + qNum(`qty-${k}`) * PRICE[k], 0);
+        $("totalBox").textContent = `Totale: ${total.toFixed(2)}€`;
+        return total;
+      }
+      inputs.forEach(k => $(`qty-${k}`).addEventListener("input", calcTotal));
+
+      function buildOrder(){
+        const waiter = $("waiterInput")?.value?.trim();
+        const table  = $("tableInput")?.value?.trim();
+        const items = [
+          ["Birra bionda 0,5L","bionda05"],["Birra bionda 1L","bionda1"],
+          ["Birra rossa 0,5L","rossa05"], ["Birra rossa 1L","rossa1"],
+          ["Non filtrata 0,5L","nf05"],   ["Non filtrata 1L","nf1"],
+          ["Coca-Cola","cola"],           ["Acqua naturale","nat"], ["Acqua frizzante","frizz"],
+        ].map(([name,key]) => ({ name, qty: qNum(`qty-${key}`), price: PRICE[key] })).filter(i => i.qty>0);
+        const total = calcTotal();
+        return { waiter, table, items, total };
+      }
+
+      async function salvaOrdine(){
+        const { waiter, table, items, total } = buildOrder();
+        if (!waiter || !table) { alert("Inserisci nome cameriere e tavolo"); return; }
+        if (!items.length) { alert("Aggiungi almeno una quantità"); return; }
+
+        await addDoc(collection(db,"orders"), {
+          waiter, table, items, total,
+          status: "in_attesa",
+          createdAt: serverTimestamp()
+        });
+
+        inputs.forEach(k => { const el = $(`qty-${k}`); if (el) el.value = 0; });
+        calcTotal();
+        alert("Ordine inserito ✅");
+      }
+
+      const STATI = ["in_attesa","pronto","consegnato"];
+      async function avanzaStato(id, statoAttuale){
+        const next = STATI[(STATI.indexOf(statoAttuale)+1) % STATI.length];
+        await updateDoc(doc(db,"orders",id), { status: next });
+      }
+      async function eliminaOrdine(id){
+        if (!confirm("Eliminare questo ordine?")) return;
+        await deleteDoc(doc(db,"orders",id));
+      }
+      async function svuotaFineSerata(){
+        if (!confirm("Cancellare TUTTI gli ordini?")) return;
+        const snap = await getDocs(collection(db,"orders"));
+        const batch = writeBatch(db);
+        snap.forEach(d => batch.delete(d.ref));
+        await batch.commit();
+      }
+
+      function renderOrdini(ordini){
+        const wrap = $("ordersLive");
+        if (!wrap) return;
+        wrap.innerHTML = \`
+          <table>
+            <thead>
+              <tr>
+                <th>Ora</th><th>Tavolo</th><th>Cameriere</th><th>Dettagli</th><th>Totale</th><th>Stato</th><th>Azioni</th>
+              </tr>
+            </thead>
+            <tbody>
+              \${ordini.map(o => \`
+                <tr>
+                  <td>\${o.createdAt?.toDate ? o.createdAt.toDate().toLocaleTimeString() : "-"}</td>
+                  <td>\${o.table||""}</td>
+                  <td>\${o.waiter||""}</td>
+                  <td>\${(o.items||[]).map(i => \`\${i.qty}× \${i.name}\`).join("<br>")}</td>
+                  <td>\${Number(o.total||0).toFixed(2)}€</td>
+                  <td><span class="badge \${o.status==='in_attesa'?'status-wait':o.status==='pronto'?'status-ready':'status-done'}">\${o.status||""}</span></td>
+                  <td>
+                    <button class="btn" onclick="window._advance('\${o.id}','\${o.status||"in_attesa"}')">Avanza</button>
+                    <button class="btn danger" onclick="window._remove('\${o.id}')">Elimina</button>
+                  </td>
+                </tr>
+              \`).join("")}
+            </tbody>
+          </table>
+        \`;
+      }
+
+      const q = query(collection(db,"orders"), orderBy("createdAt","desc"));
+      onSnapshot(q, snap => {
+        const ordini = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+        renderOrdini(ordini);
+      });
+
+      document.getElementById("addOrderBtn").addEventListener("click", salvaOrdine);
+      document.getElementById("clearAllBtn").addEventListener("click", svuotaFineSerata);
+      calcTotal();
+
+      window._advance = avanzaStato;
+      window._remove  = eliminaOrdine;
+    </script>
+  </body>
 </html>
