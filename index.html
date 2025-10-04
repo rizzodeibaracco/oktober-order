@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Oktober Orders – Firestore</title>
+    <title>Oktober Orders – Firestore (ROBUST)</title>
     <style>
       :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
       body { margin:0; background:#0b0f14; color:#e6eef8; }
@@ -27,11 +27,12 @@
       .status-ready { background:#1f4030; }
       .status-done { background:#31402a; }
       .muted { opacity:.65; }
+      .pill { display:inline-block; padding:4px 8px; border-radius:999px; border:1px solid #2a3550; font-size:12px; }
     </style>
   </head>
   <body>
     <div class="container">
-      <h1>Oktober Orders – Sync (Firestore)</h1>
+      <h1>Oktober Orders – Sync (Firestore) <span class="pill">ROBUST v1</span></h1>
       <div class="grid">
         <div class="card">
           <h2>Nuovo ordine</h2>
@@ -54,7 +55,7 @@
             <div id="totalBox" class="total">Totale: 0,00€</div>
             <button id="addOrderBtn" type="button" class="btn">➕ Aggiungi ordine</button>
           </div>
-          <p class="small muted" style="margin-top:10px">Suggerimento: apri questa pagina su più dispositivi. Gli ordini si vedranno in tempo reale.</p>
+          <p class="small muted" style="margin-top:10px">Apri su più dispositivi: gli ordini si sincronizzano live.</p>
         </div>
 
         <div class="card">
@@ -66,15 +67,16 @@
         </div>
       </div>
       <p class="small muted" style="margin-top:12px">
-        Hosting statico (GitHub Pages) + Firestore in tempo reale.
+        Hosting statico (GitHub Pages) + Firestore Cloud. Questa build mostra sempre i dati esistenti (anche se mancasse "createdAt").
       </p>
     </div>
 
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
       import {
-        getFirestore, collection, addDoc, onSnapshot, serverTimestamp,
-        query, orderBy, updateDoc, doc, deleteDoc, getDocs, writeBatch
+        getFirestore, enableIndexedDbPersistence,
+        collection, addDoc, onSnapshot, serverTimestamp,
+        updateDoc, doc, deleteDoc, getDocs, writeBatch
       } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
       const firebaseConfig = {
@@ -88,6 +90,9 @@
 
       const app = initializeApp(firebaseConfig);
       const db  = getFirestore(app);
+
+      // Abilita cache offline (non obbligatorio; se fallisce, ignora)
+      enableIndexedDbPersistence(db).catch(()=>{ /* ok se multi-tab */ });
 
       const PRICE = { bionda05:6, bionda1:11, rossa05:7, rossa1:13, nf05:7, nf1:13, cola:4, nat:2, frizz:2 };
       const $ = (id) => document.getElementById(id);
@@ -177,9 +182,10 @@
         `;
       }
 
-      const q = query(collection(db,"orders"), orderBy("createdAt","desc"));
-      onSnapshot(q, snap => {
+      // Snapshot su tutta la collezione (senza orderBy), poi sort client per avere SEMPRE i docs
+      onSnapshot(collection(db,"orders"), snap => {
         const ordini = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+        ordini.sort((a,b)=> (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
         renderOrdini(ordini);
       });
 
