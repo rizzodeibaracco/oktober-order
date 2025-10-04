@@ -3,36 +3,42 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Oktober Orders – Firestore (ROBUST)</title>
+    <title>Oktober Orders – Firestore (ROBUST v2)</title>
     <style>
       :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
       body { margin:0; background:#0b0f14; color:#e6eef8; }
       .container { max-width: 1100px; margin: 0 auto; padding: 16px; }
-      h1 { margin: 8px 0 16px; }
       .grid { display:grid; grid-template-columns:1fr; gap:16px; }
       @media (min-width: 900px){ .grid{ grid-template-columns: 1fr 1fr; } }
       .card { background:#111826; border:1px solid #1f2a3a; border-radius:16px; padding:16px; box-shadow: 0 6px 20px rgba(0,0,0,.25); }
-      .card h2 { margin:0 0 8px; }
       .row { display:flex; gap:8px; align-items:center; }
-      .input, select { width:100%; padding:10px; border-radius:12px; border:1px solid #1f2a3a; background:#0f1624; color:#e6eef8; }
+      .input { width:100%; padding:10px; border-radius:12px; border:1px solid #1f2a3a; background:#0f1624; color:#e6eef8; }
       .btn { padding:10px 14px; border-radius:12px; border:1px solid #2a3550; background:#1b2540; color:#e6eef8; cursor:pointer; }
       .btn:hover { filter:brightness(1.1); }
       .btn.danger { background:#3b1b1b; border-color:#5a2a2a; }
-      .total { font-weight:700; font-size:18px; }
+      .pill { display:inline-block; padding:4px 8px; border-radius:999px; border:1px solid #2a3550; font-size:12px; }
       .small { font-size:12px; opacity:.75; }
       table { width:100%; border-collapse:collapse; }
-      th, td { padding:8px; border-bottom:1px solid #223048; text-align:left; vertical-align: top; }
+      th, td { padding:8px; border-bottom:1px solid #223048; text-align:left; vertical-align:top; }
       .badge { padding: 4px 10px; border-radius: 999px; font-size: 12px; border:1px solid #2a3550; }
       .status-wait { background:#2a2540; }
       .status-ready { background:#1f4030; }
       .status-done { background:#31402a; }
-      .muted { opacity:.65; }
-      .pill { display:inline-block; padding:4px 8px; border-radius:999px; border:1px solid #2a3550; font-size:12px; }
+      #diag { margin:8px 0 16px; display:flex; gap:8px; flex-wrap:wrap; }
+      #diag .pill strong { margin-right:6px; }
     </style>
   </head>
   <body>
     <div class="container">
-      <h1>Oktober Orders – Sync (Firestore) <span class="pill">ROBUST v1</span></h1>
+      <h1>Oktober Orders – Sync <span class="pill">ROBUST v2</span></h1>
+      <div id="diag">
+        <span class="pill"><strong>project:</strong> <span id="pname">…</span></span>
+        <span class="pill"><strong>docs:</strong> <span id="docCount">0</span></span>
+        <span class="pill"><strong>build:</strong> 2025-10-04 15:43:41Z</span>
+        <button id="refreshBtn" class="btn" title="Forza ricarica senza cache">♻️ Hard refresh</button>
+        <button id="cacheBustBtn" class="btn" title="Apri con cache-buster">🚫 Cache-buster</button>
+      </div>
+
       <div class="grid">
         <div class="card">
           <h2>Nuovo ordine</h2>
@@ -52,10 +58,9 @@
             <label>Acqua frizzante <span class="small">(2€)</span></label><input id="qty-frizz"    type="number" min="0" class="input" value="0" />
           </div>
           <div class="row" style="justify-content:space-between;margin-top:12px">
-            <div id="totalBox" class="total">Totale: 0,00€</div>
+            <div id="totalBox" class="pill">Totale: 0,00€</div>
             <button id="addOrderBtn" type="button" class="btn">➕ Aggiungi ordine</button>
           </div>
-          <p class="small muted" style="margin-top:10px">Apri su più dispositivi: gli ordini si sincronizzano live.</p>
         </div>
 
         <div class="card">
@@ -66,9 +71,6 @@
           </div>
         </div>
       </div>
-      <p class="small muted" style="margin-top:12px">
-        Hosting statico (GitHub Pages) + Firestore Cloud. Questa build mostra sempre i dati esistenti (anche se mancasse "createdAt").
-      </p>
     </div>
 
     <script type="module">
@@ -90,12 +92,15 @@
 
       const app = initializeApp(firebaseConfig);
       const db  = getFirestore(app);
+      enableIndexedDbPersistence(db).catch(()=>{});
 
-      // Abilita cache offline (non obbligatorio; se fallisce, ignora)
-      enableIndexedDbPersistence(db).catch(()=>{ /* ok se multi-tab */ });
+      // UI helpers
+      const $ = (id) => document.getElementById(id);
+      $("pname").textContent = firebaseConfig.projectId || "(sconosciuto)";
+      $("refreshBtn").onclick = () => location.reload(true);
+      $("cacheBustBtn").onclick = () => location.href = location.pathname + "?v=" + Date.now();
 
       const PRICE = { bionda05:6, bionda1:11, rossa05:7, rossa1:13, nf05:7, nf1:13, cola:4, nat:2, frizz:2 };
-      const $ = (id) => document.getElementById(id);
       const qNum = (id) => Number($(id)?.value || 0);
       const inputs = ["bionda05","bionda1","rossa05","rossa1","nf05","nf1","cola","nat","frizz"];
 
@@ -153,6 +158,7 @@
       }
 
       function renderOrdini(ordini){
+        $("docCount").textContent = ordini.length.toString();
         const wrap = $("ordersLive");
         if (!wrap) return;
         wrap.innerHTML = `
@@ -182,7 +188,7 @@
         `;
       }
 
-      // Snapshot su tutta la collezione (senza orderBy), poi sort client per avere SEMPRE i docs
+      // Stream di tutta la collezione, poi sort sul client per robustezza
       onSnapshot(collection(db,"orders"), snap => {
         const ordini = snap.docs.map(d => ({ id:d.id, ...d.data() }));
         ordini.sort((a,b)=> (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
@@ -191,10 +197,9 @@
 
       document.getElementById("addOrderBtn").addEventListener("click", salvaOrdine);
       document.getElementById("clearAllBtn").addEventListener("click", svuotaFineSerata);
-      calcTotal();
-
       window._advance = avanzaStato;
       window._remove  = eliminaOrdine;
+      calcTotal();
     </script>
   </body>
 </html>
