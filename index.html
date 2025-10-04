@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Oktober Orders – ok25 (Green/Light, Double Confirm)</title>
+    <title>Oktober Orders – ok25 (Light, Bold, 🍺)</title>
     <style>
       :root{
         --bg:#f7fbe9;
@@ -33,7 +33,7 @@
       .qtybox{display:flex;align-items:center;gap:8px;justify-content:flex-end}
       .qtynum{min-width:28px;text-align:center;font-weight:700}
       .row.item{justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--border)}
-      .label .price{color:var(--muted);font-size:12px;margin-left:4px}
+      .label .price{color:var(--muted);font-size:12px;margin-left:6px}
       .total{font-weight:800;font-size:20px;background:#fff5cc;border:1px solid #f5e487;border-radius:999px;padding:8px 12px}
       table{width:100%;border-collapse:collapse}
       th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
@@ -103,6 +103,8 @@
 
       // --- MENU & PREZZI ---
       const PRICE = { bionda05:6, bionda1:11, rossa05:7, rossa1:13, nf05:7, nf1:13, cola:4, nat:2, frizz:2 };
+
+      // Nomi "plain" per salvare su Firestore
       const NAMES = {
         bionda05:"Birra bionda 0,5L",
         bionda1:"Birra bionda 1L",
@@ -114,6 +116,19 @@
         nat:"Acqua naturale",
         frizz:"Acqua frizzante"
       };
+      // Nomi "HTML" per la UI (in grassetto). 1L con emoji 🍺
+      const NAMES_HTML = {
+        bionda05:"<b>Birra bionda 0,5L</b>",
+        bionda1:"<b>🍺 Birra bionda 1L</b>",
+        rossa05:"<b>Birra rossa 0,5L</b>",
+        rossa1:"<b>🍺 Birra rossa 1L</b>",
+        nf05:"<b>Non filtrata 0,5L</b>",
+        nf1:"<b>Non filtrata 1L</b>",
+        cola:"<b>Coca-Cola</b>",
+        nat:"<b>Acqua naturale</b>",
+        frizz:"<b>Acqua frizzante</b>"
+      };
+
       const KEYS = Object.keys(PRICE);
       const state = Object.fromEntries(KEYS.map(k=>[k,0]));
 
@@ -123,7 +138,7 @@
         const wrap = $("menuList");
         wrap.innerHTML = KEYS.map(k => `
           <div class="row item">
-            <div class="label">${NAMES[k]} <span class="price">(${PRICE[k]}€)</span></div>
+            <div class="label">${NAMES_HTML[k]} <span class="price">(${PRICE[k]}€)</span></div>
             <div class="qtybox">
               <button class="btn circle ghost" data-key="${k}" data-delta="-1">–</button>
               <span class="qtynum" id="qty-${k}">0</span>
@@ -156,7 +171,7 @@
       function buildOrder(){
         const waiter = $("waiterInput")?.value?.trim();
         const table  = $("tableInput")?.value?.trim();
-        const items = KEYS.map(k => ({ name:NAMES[k], qty: state[k]||0, price: PRICE[k] }))
+        const items = KEYS.map(k => ({ key:k, name:NAMES[k], qty: state[k]||0, price: PRICE[k] }))
                           .filter(i => i.qty>0);
         const total = calcTotal();
         return { waiter, table, items, total };
@@ -189,18 +204,14 @@
         await deleteDoc(doc(db,"orders",id));
       }
 
-      // ➕➕ DOPPIA CONFERMA per SVUOTA FINE SERATA
+      // Doppia conferma per svuota
       async function svuotaFineSerata(){
         if (!confirm("Confermi di voler cancellare TUTTI gli ordini dell'evento ok25?")) return;
-
-        // Leggo prima quanti documenti verrebbero eliminati
         const qEv = query(collection(db,"orders"), where("eventCode","==",EVENT_CODE));
         const snap = await getDocs(qEv);
         if (snap.empty) { alert("Nessun ordine da cancellare."); return; }
-
         const count = snap.size;
         if (!confirm(`Seconda conferma: verranno eliminati ${count} ordini. Operazione irreversibile. Procedere?`)) return;
-
         const batch = writeBatch(db);
         snap.forEach(d => batch.delete(d.ref));
         await batch.commit();
@@ -212,6 +223,16 @@
           const d = ts?.toDate ? ts.toDate() : (ts instanceof Date ? ts : new Date());
           return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
         }catch{ return "-"; }
+      }
+
+      function displayName(item){
+        // priorità al key se presente
+        if (item?.key && NAMES_HTML[item.key]) return NAMES_HTML[item.key];
+        // fallback: prova a mappare nome plain -> html
+        const entry = Object.entries(NAMES).find(([k,v]) => v === item?.name);
+        if (entry && NAMES_HTML[entry[0]]) return NAMES_HTML[entry[0]];
+        // ultimo fallback: bold generico del testo
+        return "<b>" + (item?.name || "") + "</b>";
       }
 
       function renderOrdini(ordini){
@@ -230,7 +251,7 @@
                   <td>${hhmm(o.createdAt)}</td>
                   <td>${o.table||""}</td>
                   <td>${o.waiter||""}</td>
-                  <td>${(o.items||[]).map(i => `${i.qty}× ${i.name}`).join("<br>")}</td>
+                  <td>${(o.items||[]).map(i => `${i.qty}× ${displayName(i)}`).join("<br>")}</td>
                   <td>${Number(o.total||0).toFixed(2)}€</td>
                   <td><span class="badge ${o.status==='in_attesa'?'status-wait':o.status==='pronto'?'status-ready':'status-done'}">${o.status||""}</span></td>
                   <td>
@@ -244,7 +265,7 @@
         `;
       }
 
-      // Stream SOLO degli ordini dell'evento, con sort lato client
+      // Stream SOLO degli ordini dell'evento, sort client
       const qEv = query(collection(db,"orders"), where("eventCode","==",EVENT_CODE));
       onSnapshot(qEv, (snap) => {
         const ordini = snap.docs.map(d => ({ id:d.id, ...d.data() }));
@@ -262,6 +283,7 @@
       renderMenu();
       calcTotal();
 
+      // expose
       window._advance = avanzaStato;
       window._remove  = eliminaOrdine;
     </script>
