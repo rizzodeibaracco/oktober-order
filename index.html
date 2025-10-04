@@ -19,10 +19,17 @@
         <label>Nome cameriere <input type="text" id="waiter" required></label>
         <label style="font-size:1.3rem;">Numero tavolo <input type="number" id="table" style="font-size:1.3rem;padding:10px" required></label>
         <h3>Bevande</h3>
-        <div id="drink-list"></div>
+        <div class="item"><div class="item-title">Birra bionda 0,5 L (6 €)</div><div class="qty-controls"><button type="button" class="btn round accent" data-target="q_bionda_05" data-delta="-1">-</button><span id="q_bionda_05" class="qty-display">0</span><button type="button" class="btn round primary" data-target="q_bionda_05" data-delta="1">+</button></div></div>
+        <div class="item"><div class="item-title">Birra bionda 1 L (11 €)</div><div class="qty-controls"><button type="button" class="btn round accent" data-target="q_bionda_1" data-delta="-1">-</button><span id="q_bionda_1" class="qty-display">0</span><button type="button" class="btn round primary" data-target="q_bionda_1" data-delta="1">+</button></div></div>
+        <div class="item"><div class="item-title">Birra rossa 0,5 L (7 €)</div><div class="qty-controls"><button type="button" class="btn round accent" data-target="q_rossa_05" data-delta="-1">-</button><span id="q_rossa_05" class="qty-display">0</span><button type="button" class="btn round primary" data-target="q_rossa_05" data-delta="1">+</button></div></div>
+        <div class="item"><div class="item-title">Birra rossa 1 L (13 €)</div><div class="qty-controls"><button type="button" class="btn round accent" data-target="q_rossa_1" data-delta="-1">-</button><span id="q_rossa_1" class="qty-display">0</span><button type="button" class="btn round primary" data-target="q_rossa_1" data-delta="1">+</button></div></div>
+        <div class="item"><div class="item-title">Birra non filtrata 0,5 L (7 €)</div><div class="qty-controls"><button type="button" class="btn round accent" data-target="q_nf_05" data-delta="-1">-</button><span id="q_nf_05" class="qty-display">0</span><button type="button" class="btn round primary" data-target="q_nf_05" data-delta="1">+</button></div></div>
+        <div class="item"><div class="item-title">Birra non filtrata 1 L (13 €)</div><div class="qty-controls"><button type="button" class="btn round accent" data-target="q_nf_1" data-delta="-1">-</button><span id="q_nf_1" class="qty-display">0</span><button type="button" class="btn round primary" data-target="q_nf_1" data-delta="1">+</button></div></div>
+        <div class="item"><div class="item-title">Coca-Cola (4 €)</div><div class="qty-controls"><button type="button" class="btn round accent" data-target="q_cola" data-delta="-1">-</button><span id="q_cola" class="qty-display">0</span><button type="button" class="btn round primary" data-target="q_cola" data-delta="1">+</button></div></div>
+        <div class="item"><div class="item-title">Acqua naturale (2 €)</div><div class="qty-controls"><button type="button" class="btn round accent" data-target="q_nat" data-delta="-1">-</button><span id="q_nat" class="qty-display">0</span><button type="button" class="btn round primary" data-target="q_nat" data-delta="1">+</button></div></div>
+        <div class="item"><div class="item-title">Acqua frizzante (2 €)</div><div class="qty-controls"><button type="button" class="btn round accent" data-target="q_frizz" data-delta="-1">-</button><span id="q_frizz" class="qty-display">0</span><button type="button" class="btn round primary" data-target="q_frizz" data-delta="1">+</button></div></div>
         <div class="total-line"><span>Totale ordine:</span><strong id="order-total">0 €</strong></div>
-        <button type="submit" class="btn primary">Aggiungi ordine</button>
-        <button type="button" id="reset-form" class="btn accent">Azzera</button>
+        <button type="submit" class="btn primary large">➕ Aggiungi ordine</button>
       </form>
     </section>
     <section class="card">
@@ -45,6 +52,7 @@
       <div class="kpi">In attesa: <span id="kpi-active" class="kpi-value">0</span></div>
       <div class="kpi">Pronti: <span id="kpi-ready" class="kpi-value">0</span></div>
       <div class="kpi">Consegnati: <span id="kpi-delivered" class="kpi-value">0</span></div>
+      <button id="clear-all" class="btn danger large">🗑️ Svuota fine serata</button>
     </section>
   </main>
   <footer class="container"><small>© 2025 Oktober Orders</small></footer>

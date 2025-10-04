@@ -5,8 +5,8 @@
   --card:#ffffff;
   --ink:#1a1a1a;
   --muted:#6b7280;
-  --primary:#2e7d32; /* verde bottiglia */
-  --accent:#f9a825;  /* giallo oro */
+  --primary:#2e7d32;
+  --accent:#f9a825;
   --border:#e5e7eb;
   --danger:#d32f2f;
   --blue:#1976d2;
@@ -27,9 +27,10 @@ h2{font-size:1.3rem;margin:0 0 12px}
 .btn.accent{background:var(--accent);color:white}
 .btn.danger{background:var(--danger);color:white}
 .btn.blue{background:var(--blue);color:white}
-.total-line{display:flex;justify-content:space-between;align-items:center;font-size:1.2rem;margin-top:12px;padding-top:8px;border-top:2px solid var(--border)}
+.btn.large{font-size:1.2rem;padding:12px 20px}
+.total-line{display:flex;justify-content:space-between;align-items:center;font-size:1.4rem;margin-top:12px;padding:12px;border-top:3px solid var(--accent);color:var(--accent);font-weight:800}
 .order{border:2px solid var(--primary);border-radius:12px;padding:10px;margin:6px 0}
-.order-head{display:flex;justify-content:space-between;align-items:center}
+.order-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px}
 .order-items{margin:6px 0 0 16px}
 .order-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .badge{padding:4px 8px;border-radius:12px;font-size:.9rem}
