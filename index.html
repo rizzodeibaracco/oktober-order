@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Oktober Orders – Firestore (ok25)</title>
+    <title>Oktober Orders – Firestore (ok25, robust)</title>
     <style>
       :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
       body { margin:0; background:#0b0f14; color:#e6eef8; }
@@ -28,11 +28,13 @@
       .status-done { background:#31402a; }
       .muted { font-size:12px; opacity:.65; }
       .pill { display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid #2a3550; font-size:12px; }
+      #errorBox { display:none; background:#4a1f1f; border:1px solid #8a3a3a; color:#ffdede; padding:10px; border-radius:12px; margin:12px 0; white-space:pre-wrap; }
     </style>
   </head>
   <body>
     <div class="container">
       <h1>Oktober Orders – Sync <span class="pill">evento: ok25</span></h1>
+      <div id="errorBox"></div>
       <div class="grid">
         <div class="card">
           <h2>Nuovo ordine</h2>
@@ -55,7 +57,7 @@
             <div id="totalBox" class="total">Totale: 0,00€</div>
             <button id="addOrderBtn" type="button" class="btn">➕ Aggiungi ordine</button>
           </div>
-          <p class="muted" style="margin-top:10px">Apri la pagina su più dispositivi: gli ordini dell’evento <b>ok25</b> si sincronizzano in tempo reale.</p>
+          <p class="muted" style="margin-top:10px">Gli ordini dell’evento <b>ok25</b> si sincronizzano in tempo reale.</p>
         </div>
 
         <div class="card">
@@ -72,10 +74,10 @@
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
       import {
         getFirestore, collection, addDoc, onSnapshot, serverTimestamp,
-        updateDoc, doc, deleteDoc, getDocs, writeBatch, query, where, orderBy
+        updateDoc, doc, deleteDoc, getDocs, writeBatch, query, where
       } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
-const firebaseConfig = {
+      const firebaseConfig = {
   "apiKey": "AIzaSyAZPR5tHdHgbfdhq77SERUBBsH3o3GlFro",
   "authDomain": "oktoberfest-ordes.firebaseapp.com",
   "projectId": "oktoberfest-ordes",
@@ -83,7 +85,6 @@ const firebaseConfig = {
   "messagingSenderId": "836780488125",
   "appId": "1:836780488125:web:a5d99be814b773c7f78ed4"
 };
-      // 👇 Codice evento (protezione leggera)
       const EVENT_CODE = "ok25";
 
       const app = initializeApp(firebaseConfig);
@@ -93,6 +94,12 @@ const firebaseConfig = {
       const $ = (id) => document.getElementById(id);
       const qNum = (id) => Number($(id)?.value || 0);
       const inputs = ["bionda05","bionda1","rossa05","rossa1","nf05","nf1","cola","nat","frizz"];
+
+      function showErr(msg){
+        const el = document.getElementById("errorBox");
+        el.style.display='block';
+        el.textContent = "ERRORE: " + msg;
+      }
 
       function calcTotal(){
         const total = inputs.reduce((s,k)=> s + qNum(`qty-${k}`) * PRICE[k], 0);
@@ -115,26 +122,30 @@ const firebaseConfig = {
       }
 
       async function salvaOrdine(){
-        const { waiter, table, items, total } = buildOrder();
-        if (!waiter || !table) { alert("Inserisci nome cameriere e tavolo"); return; }
-        if (!items.length) { alert("Aggiungi almeno una quantità"); return; }
+        try {
+          const { waiter, table, items, total } = buildOrder();
+          if (!waiter || !table) { alert("Inserisci nome cameriere e tavolo"); return; }
+          if (!items.length) { alert("Aggiungi almeno una quantità"); return; }
 
-        await addDoc(collection(db,"orders"), {
-          waiter, table, items, total,
-          status: "in_attesa",
-          eventCode: EVENT_CODE,
-          createdAt: serverTimestamp()
-        });
+          await addDoc(collection(db,"orders"), {
+            waiter, table, items, total,
+            status: "in_attesa",
+            eventCode: EVENT_CODE,
+            createdAt: serverTimestamp()
+          });
 
-        inputs.forEach(k => { const el = $(`qty-${k}`); if (el) el.value = 0; });
-        calcTotal();
-        alert("Ordine inserito ✅");
+          inputs.forEach(k => { const el = $(`qty-${k}`); if (el) el.value = 0; });
+          calcTotal();
+          alert("Ordine inserito ✅");
+        } catch(e) {
+          console.error(e);
+          showErr(e?.message || String(e));
+        }
       }
 
       const STATI = ["in_attesa","pronto","consegnato"];
       async function avanzaStato(id, statoAttuale){
-        const next = STATI[(STATI.indexOf(statoAttuale)+1) % STATI.length];
-        await updateDoc(doc(db,"orders",id), { status: next });
+        await updateDoc(doc(db,"orders",id), { status: STATI[(STATI.indexOf(statoAttuale)+1)%STATI.length] });
       }
       async function eliminaOrdine(id){
         if (!confirm("Eliminare questo ordine?")) return;
@@ -179,12 +190,13 @@ const firebaseConfig = {
         `;
       }
 
-      // Stream SOLO degli ordini dell'evento ok25, ordinati per data
-      const qEv = query(collection(db,"orders"), where("eventCode","==",EVENT_CODE), orderBy("createdAt","desc"));
-      onSnapshot(qEv, snap => {
+      // Query SENZA orderBy (evita indice composito), sort lato client
+      const qEv = query(collection(db,"orders"), where("eventCode","==",EVENT_CODE));
+      onSnapshot(qEv, (snap) => {
         const ordini = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+        ordini.sort((a,b)=> (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
         renderOrdini(ordini);
-      });
+      }, (err) => showErr("Stream fallito: " + err.message));
 
       document.getElementById("addOrderBtn").addEventListener("click", salvaOrdine);
       document.getElementById("clearAllBtn").addEventListener("click", svuotaFineSerata);
