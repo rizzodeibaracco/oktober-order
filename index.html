@@ -17,28 +17,34 @@
       <h2>Nuovo ordine</h2>
       <form id="order-form">
         <label>Nome cameriere <input type="text" id="waiter" required></label>
-        <label>Numero tavolo <input type="number" id="table" required></label>
+        <label style="font-size:1.3rem;">Numero tavolo <input type="number" id="table" style="font-size:1.3rem;padding:10px" required></label>
         <h3>Bevande</h3>
-        <div class="item">
-          <div class="item-title">Birra bionda 0,5 L (6 €)</div>
-          <div class="qty-controls"><button type="button" class="btn round accent" data-target="q_bionda_05" data-delta="-1">-</button><span id="q_bionda_05" class="qty-display">0</span><button type="button" class="btn round primary" data-target="q_bionda_05" data-delta="1">+</button></div>
-        </div>
-        <div class="item">
-          <div class="item-title">Birra bionda 1 L (11 €)</div>
-          <div class="qty-controls"><button type="button" class="btn round accent" data-target="q_bionda_1" data-delta="-1">-</button><span id="q_bionda_1" class="qty-display">0</span><button type="button" class="btn round primary" data-target="q_bionda_1" data-delta="1">+</button></div>
-        </div>
-        <!-- altre bevande simili... -->
+        <div id="drink-list"></div>
         <div class="total-line"><span>Totale ordine:</span><strong id="order-total">0 €</strong></div>
         <button type="submit" class="btn primary">Aggiungi ordine</button>
+        <button type="button" id="reset-form" class="btn accent">Azzera</button>
       </form>
     </section>
-    <section id="orders" class="card">
+    <section class="card">
       <h2>Ordini</h2>
+      <div class="filter">
+        <label>Filtro:
+          <select id="status-filter">
+            <option value="all">Tutti</option>
+            <option value="pending">In attesa</option>
+            <option value="ready">Pronti</option>
+            <option value="delivered">Consegnati</option>
+          </select>
+        </label>
+      </div>
       <div id="orders-list"></div>
     </section>
-    <section id="dashboard" class="card">
+    <section class="card">
       <h2>Dashboard</h2>
       <div class="kpi">Incasso totale: <span id="kpi-total" class="kpi-value">0 €</span></div>
+      <div class="kpi">In attesa: <span id="kpi-active" class="kpi-value">0</span></div>
+      <div class="kpi">Pronti: <span id="kpi-ready" class="kpi-value">0</span></div>
+      <div class="kpi">Consegnati: <span id="kpi-delivered" class="kpi-value">0</span></div>
     </section>
   </main>
   <footer class="container"><small>© 2025 Oktober Orders</small></footer>
