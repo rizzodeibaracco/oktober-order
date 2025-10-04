@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Oktober Orders</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Firebase compat SDKs (perfette per GitHub Pages senza build) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+</head>
+<body>
+  <header class="container">
+    <h1>Oktober Orders</h1>
+    <nav class="toolbar">
+      <button id="view-orders" class="btn primary">Inserisci ordine</button>
+      <button id="view-dashboard" class="btn">Dashboard incassi</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <!-- SEZIONE INSERIMENTO ORDINE -->
+    <section id="order-section" class="card">
+      <h2>Nuovo ordine</h2>
+      <form id="order-form">
+        <div class="grid">
+          <label>Nome cameriere
+            <input type="text" id="waiter" placeholder="Es. Luca" required />
+          </label>
+          <label>Numero tavolo
+            <input type="number" id="table" min="1" placeholder="Es. 12" required />
+          </label>
+        </div>
+
+        <h3>Bevande</h3>
+        <div class="items">
+          <div class="item">
+            <div class="item-title">Birra bionda 0,5 L <span class="price">6 €</span></div>
+            <input type="number" min="0" value="0" id="q_bionda_05" />
+          </div>
+          <div class="item">
+            <div class="item-title">Birra bionda 1 L <span class="price">11 €</span></div>
+            <input type="number" min="0" value="0" id="q_bionda_1" />
+          </div>
+          <div class="item">
+            <div class="item-title">Birra rossa 0,5 L <span class="price">7 €</span></div>
+            <input type="number" min="0" value="0" id="q_rossa_05" />
+          </div>
+          <div class="item">
+            <div class="item-title">Birra rossa 1 L <span class="price">13 €</span></div>
+            <input type="number" min="0" value="0" id="q_rossa_1" />
+          </div>
+          <div class="item">
+            <div class="item-title">Birra non filtrata 0,5 L <span class="price">7 €</span></div>
+            <input type="number" min="0" value="0" id="q_nf_05" />
+          </div>
+          <div class="item">
+            <div class="item-title">Birra non filtrata 1 L <span class="price">13 €</span></div>
+            <input type="number" min="0" value="0" id="q_nf_1" />
+          </div>
+          <div class="item">
+            <div class="item-title">Coca-Cola <span class="price">4 €</span></div>
+            <input type="number" min="0" value="0" id="q_cola" />
+          </div>
+          <div class="item">
+            <div class="item-title">Acqua naturale <span class="price">2 €</span></div>
+            <input type="number" min="0" value="0" id="q_nat" />
+          </div>
+          <div class="item">
+            <div class="item-title">Acqua frizzante <span class="price">2 €</span></div>
+            <input type="number" min="0" value="0" id="q_frizz" />
+          </div>
+        </div>
+
+        <div class="total-line">
+          <span>Totale ordine:</span>
+          <strong id="order-total">0 €</strong>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn primary">Aggiungi ordine</button>
+          <button type="button" id="reset-form" class="btn ghost">Azzera</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- SEZIONE LISTA ORDINI -->
+    <section id="list-section" class="card">
+      <div class="list-header">
+        <h2>Ordini</h2>
+        <div class="filters">
+          <label>Filtro stato:
+            <select id="status-filter">
+              <option value="all">Tutti</option>
+              <option value="pending">In attesa</option>
+              <option value="ready">Pronti</option>
+              <option value="delivered">Consegnati</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <div id="orders-empty" class="muted">Nessun ordine ancora.</div>
+      <div id="orders-list" class="orders"></div>
+    </section>
+
+    <!-- SEZIONE DASHBOARD -->
+    <section id="dashboard-section" class="card hidden">
+      <h2>Dashboard incassi</h2>
+      <div class="grid">
+        <div class="kpi"><div class="kpi-label">Incasso totale</div><div class="kpi-value" id="kpi-total">0 €</div></div>
+        <div class="kpi"><div class="kpi-label">Ordini attivi</div><div class="kpi-value" id="kpi-active">0</div></div>
+        <div class="kpi"><div class="kpi-label">Ordini pronti</div><div class="kpi-value" id="kpi-ready">0</div></div>
+        <div class="kpi"><div class="kpi-label">Ordini consegnati</div><div class="kpi-value" id="kpi-delivered">0</div></div>
+      </div>
+      <p class="muted small">I valori si aggiornano in tempo reale.</p>
+    </section>
+  </main>
+
+  <footer class="container foot">
+    <small>© 2025 Oktober Orders — Sincronizzato con Firebase</small>
+  </footer>
+
+  <script>
+    window.__FIREBASE_CONFIG__ = {"apiKey": "AIzaSyAZPR5tHdHgbfdhq77SERUBBsH3o3GlFro", "authDomain": "oktoberfest-ordes.firebaseapp.com", "projectId": "oktoberfest-ordes", "storageBucket": "oktoberfest-ordes.firebasestorage.app", "messagingSenderId": "836780488125", "appId": "1:836780488125:web:a5d99be814b773c7f78ed4"};
+  </script>
+  <script src="app.js"></script>
+</body>
+</html>
