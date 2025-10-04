@@ -3,67 +3,78 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Oktober Orders – Firestore (ok25, robust)</title>
+    <title>Oktober Orders – ok25 (Green/Light)</title>
     <style>
-      :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-      body { margin:0; background:#0b0f14; color:#e6eef8; }
-      .container { max-width: 1100px; margin: 0 auto; padding: 16px; }
-      h1 { margin: 8px 0 16px; }
-      .grid { display:grid; grid-template-columns:1fr; gap:16px; }
-      @media (min-width: 900px){ .grid{ grid-template-columns: 1fr 1fr; } }
-      .card { background:#111826; border:1px solid #1f2a3a; border-radius:16px; padding:16px; box-shadow: 0 6px 20px rgba(0,0,0,.25); }
-      .card h2 { margin:0 0 8px; }
-      .row { display:flex; gap:8px; align-items:center; }
-      .input, select { width:100%; padding:10px; border-radius:12px; border:1px solid #1f2a3a; background:#0f1624; color:#e6eef8; }
-      .btn { padding:10px 14px; border-radius:12px; border:1px solid #2a3550; background:#1b2540; color:#e6eef8; cursor:pointer; }
-      .btn:hover { filter:brightness(1.1); }
-      .btn.danger { background:#3b1b1b; border-color:#5a2a2a; }
-      .total { font-weight:700; font-size:18px; }
-      .small { font-size:12px; opacity:.75; }
-      table { width:100%; border-collapse:collapse; }
-      th, td { padding:8px; border-bottom:1px solid #223048; text-align:left; vertical-align: top; }
-      .badge { padding: 4px 10px; border-radius: 999px; font-size: 12px; border:1px solid #2a3550; }
-      .status-wait { background:#2a2540; }
-      .status-ready { background:#1f4030; }
-      .status-done { background:#31402a; }
-      .muted { font-size:12px; opacity:.65; }
-      .pill { display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid #2a3550; font-size:12px; }
-      #errorBox { display:none; background:#4a1f1f; border:1px solid #8a3a3a; color:#ffdede; padding:10px; border-radius:12px; margin:12px 0; white-space:pre-wrap; }
+      :root{
+        --bg:#f7fbe9;          /* giallo-verde chiarissimo */
+        --card:#ffffff;        /* pannelli chiari */
+        --text:#1b2b16;        /* verde scuro leggibile */
+        --muted:#58734a;
+        --primary:#2e7d32;     /* verde */
+        --primary-2:#66bb6a;   /* verde chiaro */
+        --accent:#f4d03f;      /* giallo caldo */
+        --danger:#b71c1c;      /* rosso scuro */
+        --border:#d9e8c6;
+      }
+      *{box-sizing:border-box}
+      body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+      .container{max-width:1100px;margin:0 auto;padding:16px}
+      h1{margin:8px 0 16px}
+      .grid{display:grid;grid-template-columns:1fr;gap:16px}
+      @media(min-width:900px){.grid{grid-template-columns:1fr 1fr}}
+      .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 6px 18px rgba(27,43,22,.06)}
+      .row{display:flex;gap:8px;align-items:center}
+      .input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:#fbfff4;color:var(--text)}
+      .btn{padding:10px 14px;border-radius:12px;border:1px solid var(--primary-2);background:linear-gradient(180deg,var(--primary-2),var(--primary));color:#fff;cursor:pointer}
+      .btn:hover{filter:brightness(1.03)}
+      .btn.ghost{background:#fff;color:var(--primary);border:1px solid var(--primary)}
+      .btn.danger{border-color:#e57373;background:linear-gradient(180deg,#ef9a9a,#e53935)}
+      .circle{width:40px;height:40px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:22px;padding:0}
+      .qtybox{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+      .qtynum{min-width:28px;text-align:center;font-weight:700}
+      .row.item{justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--border)}
+      .label .price{color:var(--muted);font-size:12px;margin-left:4px}
+      .total{font-weight:800;font-size:20px;background:#fff5cc;border:1px solid #f5e487;border-radius:999px;padding:8px 12px}
+      table{width:100%;border-collapse:collapse}
+      th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+      .badge{padding:4px 10px;border-radius:999px;font-size:12px;border:1px solid var(--border)}
+      .status-wait{background:#fffce6}
+      .status-ready{background:#e8f5e9}
+      .status-done{background:#e8f0fe}
+      .muted{color:var(--muted)}
+      .pill{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid var(--border);background:#fff8d6}
+      #errorBox{display:none;background:#ffe5e5;border:1px solid #ffb3b3;color:#590909;padding:10px;border-radius:12px;margin:12px 0;white-space:pre-wrap}
     </style>
   </head>
   <body>
     <div class="container">
-      <h1>Oktober Orders – Sync <span class="pill">evento: ok25</span></h1>
+      <h1>Oktober Orders <span class="pill">evento: ok25</span></h1>
+
       <div id="errorBox"></div>
+
       <div class="grid">
         <div class="card">
           <h2>Nuovo ordine</h2>
-          <div class="row">
+          <div class="row" style="gap:12px">
             <input id="waiterInput" class="input" placeholder="Nome cameriere" />
             <input id="tableInput" class="input" placeholder="Tavolo" />
           </div>
-          <div style="margin-top:12px;display:grid;grid-template-columns:1fr 110px;gap:8px;align-items:center">
-            <label>Birra bionda 0,5L <span class="small">(6€)</span></label><input id="qty-bionda05" type="number" min="0" class="input" value="0" />
-            <label>Birra bionda 1L <span class="small">(11€)</span></label><input id="qty-bionda1"  type="number" min="0" class="input" value="0" />
-            <label>Birra rossa 0,5L <span class="small">(7€)</span></label><input id="qty-rossa05"  type="number" min="0" class="input" value="0" />
-            <label>Birra rossa 1L <span class="small">(13€)</span></label><input id="qty-rossa1"   type="number" min="0" class="input" value="0" />
-            <label>Non filtrata 0,5L <span class="small">(7€)</span></label><input id="qty-nf05"     type="number" min="0" class="input" value="0" />
-            <label>Non filtrata 1L <span class="small">(13€)</span></label><input id="qty-nf1"      type="number" min="0" class="input" value="0" />
-            <label>Coca-Cola <span class="small">(4€)</span></label><input id="qty-cola"     type="number" min="0" class="input" value="0" />
-            <label>Acqua naturale <span class="small">(2€)</span></label><input id="qty-nat"      type="number" min="0" class="input" value="0" />
-            <label>Acqua frizzante <span class="small">(2€)</span></label><input id="qty-frizz"    type="number" min="0" class="input" value="0" />
+
+          <div id="menuList" style="margin-top:8px">
+            <!-- voci generate da JS -->
           </div>
+
           <div class="row" style="justify-content:space-between;margin-top:12px">
             <div id="totalBox" class="total">Totale: 0,00€</div>
             <button id="addOrderBtn" type="button" class="btn">➕ Aggiungi ordine</button>
           </div>
-          <p class="muted" style="margin-top:10px">Gli ordini dell’evento <b>ok25</b> si sincronizzano in tempo reale.</p>
+          <p class="muted" style="margin-top:10px">Suggerimento: apri questa pagina su più dispositivi. Gli ordini si sincronizzano live.</p>
         </div>
 
         <div class="card">
           <h2>Ordini</h2>
           <div id="ordersLive"></div>
-          <div class="row" style="margin-top:12px;justify-content:flex-end">
+          <div class="row" style="margin-top:12px;justify-content:flex-end;gap:8px">
             <button id="clearAllBtn" type="button" class="btn danger">🧹 Svuota fine serata</button>
           </div>
         </div>
@@ -90,62 +101,90 @@
       const app = initializeApp(firebaseConfig);
       const db  = getFirestore(app);
 
+      // --- MENU & PREZZI ---
       const PRICE = { bionda05:6, bionda1:11, rossa05:7, rossa1:13, nf05:7, nf1:13, cola:4, nat:2, frizz:2 };
-      const $ = (id) => document.getElementById(id);
-      const qNum = (id) => Number($(id)?.value || 0);
-      const inputs = ["bionda05","bionda1","rossa05","rossa1","nf05","nf1","cola","nat","frizz"];
+      const NAMES = {
+        bionda05:"Birra bionda 0,5L",
+        bionda1:"Birra bionda 1L",
+        rossa05:"Birra rossa 0,5L",
+        rossa1:"Birra rossa 1L",
+        nf05:"Non filtrata 0,5L",
+        nf1:"Non filtrata 1L",
+        cola:"Coca-Cola",
+        nat:"Acqua naturale",
+        frizz:"Acqua frizzante"
+      };
+      const KEYS = Object.keys(PRICE);
+      const state = Object.fromEntries(KEYS.map(k=>[k,0]));
 
-      function showErr(msg){
-        const el = document.getElementById("errorBox");
-        el.style.display='block';
-        el.textContent = "ERRORE: " + msg;
+      const $ = (id) => document.getElementById(id);
+
+      // Genera righe con pulsanti +/- per ogni voce
+      function renderMenu(){
+        const wrap = $("menuList");
+        wrap.innerHTML = KEYS.map(k => `
+          <div class="row item">
+            <div class="label">${NAMES[k]} <span class="price">(${PRICE[k]}€)</span></div>
+            <div class="qtybox">
+              <button class="btn circle ghost" data-key="${k}" data-delta="-1">–</button>
+              <span class="qtynum" id="qty-${k}">0</span>
+              <button class="btn circle" data-key="${k}" data-delta="1">+</button>
+            </div>
+          </div>
+        `).join("");
+        wrap.querySelectorAll("button[data-key]").forEach(btn=>{
+          btn.addEventListener("click", ()=>{
+            const key = btn.getAttribute("data-key");
+            const delta = Number(btn.getAttribute("data-delta"));
+            adjustQty(key, delta);
+          });
+        });
+      }
+
+      function adjustQty(key, delta){
+        state[key] = Math.max(0, (state[key]||0) + delta);
+        const badge = document.getElementById("qty-"+key);
+        if (badge) badge.textContent = state[key];
+        calcTotal();
       }
 
       function calcTotal(){
-        const total = inputs.reduce((s,k)=> s + qNum(`qty-${k}`) * PRICE[k], 0);
-        $("totalBox").textContent = `Totale: ${total.toFixed(2)}€`;
+        const total = KEYS.reduce((s,k)=> s + (state[k]||0) * PRICE[k], 0);
+        $("totalBox").textContent = "Totale: " + total.toFixed(2) + "€";
         return total;
       }
-      inputs.forEach(k => $(`qty-${k}`).addEventListener("input", calcTotal));
 
       function buildOrder(){
         const waiter = $("waiterInput")?.value?.trim();
         const table  = $("tableInput")?.value?.trim();
-        const items = [
-          ["Birra bionda 0,5L","bionda05"],["Birra bionda 1L","bionda1"],
-          ["Birra rossa 0,5L","rossa05"], ["Birra rossa 1L","rossa1"],
-          ["Non filtrata 0,5L","nf05"],   ["Non filtrata 1L","nf1"],
-          ["Coca-Cola","cola"],           ["Acqua naturale","nat"], ["Acqua frizzante","frizz"],
-        ].map(([name,key]) => ({ name, qty: qNum(`qty-${key}`), price: PRICE[key] })).filter(i => i.qty>0);
+        const items = KEYS.map(k => ({ name:NAMES[k], qty: state[k]||0, price: PRICE[k] }))
+                          .filter(i => i.qty>0);
         const total = calcTotal();
         return { waiter, table, items, total };
       }
 
       async function salvaOrdine(){
-        try {
-          const { waiter, table, items, total } = buildOrder();
-          if (!waiter || !table) { alert("Inserisci nome cameriere e tavolo"); return; }
-          if (!items.length) { alert("Aggiungi almeno una quantità"); return; }
+        const { waiter, table, items, total } = buildOrder();
+        if (!waiter || !table) { alert("Inserisci nome cameriere e tavolo"); return; }
+        if (!items.length) { alert("Aggiungi almeno una quantità"); return; }
 
-          await addDoc(collection(db,"orders"), {
-            waiter, table, items, total,
-            status: "in_attesa",
-            eventCode: EVENT_CODE,
-            createdAt: serverTimestamp()
-          });
+        await addDoc(collection(db,"orders"), {
+          waiter, table, items, total,
+          status: "in_attesa",
+          eventCode: EVENT_CODE,
+          createdAt: serverTimestamp()
+        });
 
-          inputs.forEach(k => { const el = $(`qty-${k}`); if (el) el.value = 0; });
-          calcTotal();
-          alert("Ordine inserito ✅");
-        } catch(e) {
-          console.error(e);
-          showErr(e?.message || String(e));
-        }
+        // reset
+        KEYS.forEach(k => { state[k]=0; const el=$("qty-"+k); if(el) el.textContent="0"; });
+        calcTotal();
+        alert("Ordine inserito ✅");
       }
 
       const STATI = ["in_attesa","pronto","consegnato"];
       async function avanzaStato(id, statoAttuale){
-        await updateDoc(doc(db,"orders",id), { status: STATI[(STATI.indexOf(statoAttuale)+1)%STATI.length] });
+        const next = STATI[(STATI.indexOf(statoAttuale)+1) % STATI.length];
+        await updateDoc(doc(db,"orders",id), { status: next });
       }
       async function eliminaOrdine(id){
         if (!confirm("Eliminare questo ordine?")) return;
@@ -158,6 +197,13 @@
         const batch = writeBatch(db);
         snap.forEach(d => batch.delete(d.ref));
         await batch.commit();
+      }
+
+      function hhmm(ts){
+        try{
+          const d = ts?.toDate ? ts.toDate() : (ts instanceof Date ? ts : new Date());
+          return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        }catch{ return "-"; }
       }
 
       function renderOrdini(ordini){
@@ -173,14 +219,14 @@
             <tbody>
               ${ordini.map(o => `
                 <tr>
-                  <td>${o.createdAt?.toDate ? o.createdAt.toDate().toLocaleTimeString() : "-"}</td>
+                  <td>${hhmm(o.createdAt)}</td>
                   <td>${o.table||""}</td>
                   <td>${o.waiter||""}</td>
                   <td>${(o.items||[]).map(i => `${i.qty}× ${i.name}`).join("<br>")}</td>
                   <td>${Number(o.total||0).toFixed(2)}€</td>
                   <td><span class="badge ${o.status==='in_attesa'?'status-wait':o.status==='pronto'?'status-ready':'status-done'}">${o.status||""}</span></td>
                   <td>
-                    <button class="btn" onclick="window._advance('${o.id}','${o.status||"in_attesa"}')">Avanza</button>
+                    <button class="btn ghost" onclick="window._advance('${o.id}','${o.status||"in_attesa"}')">Avanza</button>
                     <button class="btn danger" onclick="window._remove('${o.id}')">Elimina</button>
                   </td>
                 </tr>
@@ -190,19 +236,27 @@
         `;
       }
 
-      // Query SENZA orderBy (evita indice composito), sort lato client
+      // Stream SOLO degli ordini dell'evento, poi ordina in client per orario
       const qEv = query(collection(db,"orders"), where("eventCode","==",EVENT_CODE));
       onSnapshot(qEv, (snap) => {
         const ordini = snap.docs.map(d => ({ id:d.id, ...d.data() }));
         ordini.sort((a,b)=> (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
         renderOrdini(ordini);
-      }, (err) => showErr("Stream fallito: " + err.message));
+      }, (err) => {
+        const el = document.getElementById("errorBox");
+        el.style.display = "block";
+        el.textContent = "Stream fallito: " + err.message;
+      });
 
       document.getElementById("addOrderBtn").addEventListener("click", salvaOrdine);
       document.getElementById("clearAllBtn").addEventListener("click", svuotaFineSerata);
+
+      renderMenu();
+      calcTotal();
+
+      // Espone funzioni per i pulsanti in tabella
       window._advance = avanzaStato;
       window._remove  = eliminaOrdine;
-      calcTotal();
     </script>
   </body>
 </html>
