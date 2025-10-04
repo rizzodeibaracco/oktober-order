@@ -3,17 +3,17 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Oktober Orders – ok25 (Green/Light)</title>
+    <title>Oktober Orders – ok25 (Green/Light, Double Confirm)</title>
     <style>
       :root{
-        --bg:#f7fbe9;          /* giallo-verde chiarissimo */
-        --card:#ffffff;        /* pannelli chiari */
-        --text:#1b2b16;        /* verde scuro leggibile */
+        --bg:#f7fbe9;
+        --card:#ffffff;
+        --text:#1b2b16;
         --muted:#58734a;
-        --primary:#2e7d32;     /* verde */
-        --primary-2:#66bb6a;   /* verde chiaro */
-        --accent:#f4d03f;      /* giallo caldo */
-        --danger:#b71c1c;      /* rosso scuro */
+        --primary:#2e7d32;
+        --primary-2:#66bb6a;
+        --accent:#f4d03f;
+        --danger:#b71c1c;
         --border:#d9e8c6;
       }
       *{box-sizing:border-box}
@@ -119,7 +119,6 @@
 
       const $ = (id) => document.getElementById(id);
 
-      // Genera righe con pulsanti +/- per ogni voce
       function renderMenu(){
         const wrap = $("menuList");
         wrap.innerHTML = KEYS.map(k => `
@@ -175,7 +174,6 @@
           createdAt: serverTimestamp()
         });
 
-        // reset
         KEYS.forEach(k => { state[k]=0; const el=$("qty-"+k); if(el) el.textContent="0"; });
         calcTotal();
         alert("Ordine inserito ✅");
@@ -190,13 +188,23 @@
         if (!confirm("Eliminare questo ordine?")) return;
         await deleteDoc(doc(db,"orders",id));
       }
+
+      // ➕➕ DOPPIA CONFERMA per SVUOTA FINE SERATA
       async function svuotaFineSerata(){
-        if (!confirm("Cancellare TUTTI gli ordini dell'evento?")) return;
-        const q = query(collection(db,"orders"), where("eventCode","==",EVENT_CODE));
-        const snap = await getDocs(q);
+        if (!confirm("Confermi di voler cancellare TUTTI gli ordini dell'evento ok25?")) return;
+
+        // Leggo prima quanti documenti verrebbero eliminati
+        const qEv = query(collection(db,"orders"), where("eventCode","==",EVENT_CODE));
+        const snap = await getDocs(qEv);
+        if (snap.empty) { alert("Nessun ordine da cancellare."); return; }
+
+        const count = snap.size;
+        if (!confirm(`Seconda conferma: verranno eliminati ${count} ordini. Operazione irreversibile. Procedere?`)) return;
+
         const batch = writeBatch(db);
         snap.forEach(d => batch.delete(d.ref));
         await batch.commit();
+        alert("Ordini cancellati");
       }
 
       function hhmm(ts){
@@ -236,7 +244,7 @@
         `;
       }
 
-      // Stream SOLO degli ordini dell'evento, poi ordina in client per orario
+      // Stream SOLO degli ordini dell'evento, con sort lato client
       const qEv = query(collection(db,"orders"), where("eventCode","==",EVENT_CODE));
       onSnapshot(qEv, (snap) => {
         const ordini = snap.docs.map(d => ({ id:d.id, ...d.data() }));
@@ -254,7 +262,6 @@
       renderMenu();
       calcTotal();
 
-      // Espone funzioni per i pulsanti in tabella
       window._advance = avanzaStato;
       window._remove  = eliminaOrdine;
     </script>
