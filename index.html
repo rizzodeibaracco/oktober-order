@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Oktober Orders – ok25 (Totali + Soft Delete + CSV)</title>
+    <title>Oktober Orders – ok25 (Giornate + Totali + CSV)</title>
     <style>
       :root{
         --bg:#f7fbe9;
@@ -36,6 +36,7 @@
       .btn.ghost{background:#fff;color:var(--primary);border:1px solid var(--primary)}
       .btn.danger{border-color:#e57373;background:linear-gradient(180deg,#ef9a9a,#e53935)}
       .btn.alt{border-color:#f6d365;background:linear-gradient(180deg,#ffe082,#f4b400); color:#1b2b16}
+      .btn.warn{border-color:#ffb74d;background:linear-gradient(180deg,#ffd54f,#fb8c00); color:#1b2b16}
       .circle{width:48px;height:48px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;padding:0}
       .qtybox{display:flex;align-items:center;gap:10px;justify-content:flex-end}
       .qtynum{min-width:32px;text-align:center;font-weight:800;font-size:20px}
@@ -79,10 +80,14 @@
       .modal{max-width:900px;width:100%;max-height:85vh;overflow:auto;background:#fff;border-radius:16px;border:1px solid var(--border);box-shadow:0 20px 60px rgba(0,0,0,.25)}
       .modal header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
       .modal .content{padding:16px}
-      .modal .footer{padding:14px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+      .modal .footer{padding:14px 16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
       .totals{display:flex;flex-wrap:wrap;gap:10px}
       .chip{background:#fff8d6;border:1px solid var(--border);border-radius:999px;padding:6px 10px}
       .deleted{opacity:.6}
+
+      .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+      .toolbar label{font-weight:700}
+      .switch{display:flex;gap:8px;align-items:center}
     </style>
   </head>
   <body>
@@ -110,10 +115,19 @@
 
         <div class="card">
           <h2>Ordini</h2>
+
+          <!-- Toolbar giornata -->
+          <div class="toolbar">
+            <label for="dayInput">Giornata:</label>
+            <input type="date" id="dayInput" class="input" style="max-width:220px" />
+            <span class="muted">Mostro solo gli ordini <b>non eliminati</b> della giornata scelta</span>
+          </div>
+
           <div id="ordersLive"></div>
-          <div class="row" style="margin-top:12px;justify-content:flex-end;gap:8px">
+          <div class="row" style="margin-top:12px;justify-content:flex-end;gap:8px;flex-wrap:wrap">
             <button id="totalsBtn" type="button" class="btn alt">💶 Incassi totali</button>
-            <button id="clearAllBtn" type="button" class="btn danger">🧹 Svuota fine serata</button>
+            <button id="clearDayBtn" type="button" class="btn warn">🧹 Svuota giornata</button>
+            <button id="hardWipeBtn" type="button" class="btn danger">🗑️ Elimina storico evento</button>
           </div>
         </div>
       </div>
@@ -127,12 +141,27 @@
           <button id="closeTotals" class="btn ghost">Chiudi</button>
         </header>
         <div class="content">
+          <div class="toolbar">
+            <div class="switch">
+              <label>Ambito:</label>
+              <button id="scopeCurrent" class="btn ghost">Giornata corrente</button>
+              <button id="scopeAll" class="btn ghost">Tutte</button>
+            </div>
+            <div class="switch">
+              <label for="includeDeleted">Includi eliminati</label>
+              <input type="checkbox" id="includeDeleted" checked />
+            </div>
+          </div>
           <div id="totalsSummary" class="totals" style="margin-bottom:12px"></div>
           <div id="totalsList"></div>
         </div>
         <div class="footer">
-          <button id="exportCsv" class="btn alt">⬇️ Esporta CSV</button>
-          <button id="closeTotals2" class="btn">OK</button>
+          <div class="switch">
+            <button id="exportCsv" class="btn alt">⬇️ Esporta CSV (vista)</button>
+          </div>
+          <div>
+            <button id="closeTotals2" class="btn">OK</button>
+          </div>
         </div>
       </div>
     </div>
@@ -141,7 +170,7 @@
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
       import {
         getFirestore, collection, addDoc, onSnapshot, serverTimestamp,
-        updateDoc, doc, getDocs, writeBatch, query, where
+        updateDoc, doc, getDocs, writeBatch, query, where, deleteDoc
       } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
       const firebaseConfig = {
@@ -185,6 +214,34 @@
       const state = Object.fromEntries(KEYS.map(k=>[k,0]));
 
       const $ = (id) => document.getElementById(id);
+      const pad = n => String(n).padStart(2,"0");
+      const ymd = (d) => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+      const hhmm = (ts)=>{
+        try{
+          const d = ts?.toDate ? ts.toDate() : (ts instanceof Date ? ts : new Date());
+          return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        }catch{ return "-"; }
+      };
+      const ymdhm = (ts)=>{
+        try{
+          const d = ts?.toDate ? ts.toDate() : (ts instanceof Date ? ts : new Date());
+          return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }catch{ return "-"; }
+      };
+
+      // --- GIORNATA CORRENTE ---
+      let CURRENT_DAY = localStorage.getItem("ok25_current_day") || ymd(new Date());
+      function applyDayToUI(){
+        const input = $("dayInput");
+        if (input) input.value = CURRENT_DAY;
+      }
+      function setDay(newDay){
+        CURRENT_DAY = newDay;
+        localStorage.setItem("ok25_current_day", CURRENT_DAY);
+        renderOrdini(_snapshotCache || []);
+      }
+      applyDayToUI();
+      $("dayInput").addEventListener("change", (e)=> setDay(e.target.value));
 
       function renderMenu(){
         const wrap = $("menuList");
@@ -239,6 +296,7 @@
           status: "in_attesa",
           eventCode: EVENT_CODE,
           deleted: false,
+          day: CURRENT_DAY,
           createdAt: serverTimestamp()
         });
 
@@ -253,39 +311,39 @@
         await updateDoc(doc(db,"orders",id), { status: next });
       }
 
-      // SOFT DELETE
+      // SOFT DELETE singolo (rimane nel totale storico)
       async function eliminaOrdine(id){
-        if (!confirm("Eliminare questo ordine (sarà solo nascosto, non cancellato)?")) return;
+        if (!confirm("Eliminare questo ordine (verrà archiviato, non cancellato)?")) return;
         await updateDoc(doc(db,"orders",id), { deleted: true, status: "eliminato", deletedAt: serverTimestamp() });
       }
 
-      // Doppia conferma per svuota: soft delete di tutti quelli dell'evento
-      async function svuotaFineSerata(){
-        if (!confirm("Confermi di voler archiviare TUTTI gli ordini dell'evento ok25?")) return;
+      // SOFT DELETE per la GIORNATA CORRENTE
+      async function svuotaGiornata(){
+        if (!confirm(`Confermi di voler archiviare TUTTI gli ordini della giornata ${CURRENT_DAY}?`)) return;
         const qEv = query(collection(db,"orders"), where("eventCode","==",EVENT_CODE));
         const snap = await getDocs(qEv);
-        if (snap.empty) { alert("Nessun ordine da archiviare."); return; }
-        const count = snap.size;
-        if (!confirm(`Seconda conferma: verranno archiviati ${count} ordini. Procedere?`)) return;
+        const toArchive = snap.docs.filter(d => (d.data().day || ymd((d.data().createdAt||{}).toDate?.() || new Date())) === CURRENT_DAY);
+        if (!toArchive.length) { alert("Nessun ordine da archiviare per questa giornata."); return; }
+        if (!confirm(`Seconda conferma: verranno archiviati ${toArchive.length} ordini.`)) return;
         const batch = writeBatch(db);
-        snap.forEach(d => batch.update(d.ref, { deleted: true, status: "eliminato", deletedAt: serverTimestamp() }));
+        toArchive.forEach(d => batch.update(d.ref, { deleted: true, status: "eliminato", deletedAt: serverTimestamp() }));
         await batch.commit();
-        alert("Ordini archiviati");
+        alert("Giornata archiviata");
       }
 
-      function hhmm(ts){
-        try{
-          const d = ts?.toDate ? ts.toDate() : (ts instanceof Date ? ts : new Date());
-          return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-        }catch{ return "-"; }
-      }
-
-      function ymdhm(ts){
-        try{
-          const d = ts?.toDate ? ts.toDate() : (ts instanceof Date ? ts : new Date());
-          const pad = (n)=> String(n).padStart(2,'0');
-          return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes());
-        }catch{ return "-"; }
+      // HARD DELETE per l'intero EVENTO (AZZERA STORICO)
+      async function hardWipeEvento(){
+        if (!confirm("⚠️ ATTENZIONE: questa azione ELIMINA DEFINITIVAMENTE tutti gli ordini dell'evento ok25. Procedere?")) return;
+        if (!confirm("Seconda conferma: i dati NON saranno recuperabili. Procedere?")) return;
+        const parola = prompt("Terza conferma: scrivi OK25 per confermare l'eliminazione permanente.");
+        if ((parola||"").trim().toUpperCase() !== "OK25") { alert("Operazione annullata."); return; }
+        const qEv = query(collection(db,"orders"), where("eventCode","==",EVENT_CODE));
+        const snap = await getDocs(qEv);
+        if (snap.empty) { alert("Non ci sono ordini da eliminare."); return; }
+        const batch = writeBatch(db);
+        snap.forEach(d => batch.delete(d.ref));
+        await batch.commit();
+        alert("Storico evento ELIMINATO.");
       }
 
       function displayName(item){
@@ -295,10 +353,13 @@
         return "<b>" + (item?.name || "") + "</b>";
       }
 
+      // RENDER PRINCIPALE (giornata corrente, solo non eliminati)
+      let _snapshotCache = [];
       function renderOrdini(ordini){
+        _snapshotCache = ordini;
         const wrap = $("ordersLive");
         if (!wrap) return;
-        const visible = ordini.filter(o => !o.deleted);
+        const visible = ordini.filter(o => !o.deleted && (o.day || ymd((o.createdAt||{}).toDate?.() || new Date())) === CURRENT_DAY);
         wrap.innerHTML = `
           <table>
             <thead>
@@ -326,26 +387,45 @@
         `;
       }
 
+      // --- TOTALE / MODAL ---
+      let _modalScope = "current"; // "current" | "all"
+      function filterForModal(all){
+        const includeDeleted = $("includeDeleted").checked;
+        let arr = all;
+        if (_modalScope === "current"){
+          arr = arr.filter(o => (o.day || ymd((o.createdAt||{}).toDate?.() || new Date())) === CURRENT_DAY);
+        }
+        if (!includeDeleted){
+          arr = arr.filter(o => !o.deleted);
+        }
+        return arr.sort((a,b)=> (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+      }
+
       async function openTotals(){
         const qEv = query(collection(db,"orders"), where("eventCode","==",EVENT_CODE));
         const snap = await getDocs(qEv);
         const all = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-        all.sort((a,b)=> (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
 
-        const totAll = all.reduce((s,o)=> s + Number(o.total||0), 0);
-        const totActive = all.filter(o=>!o.deleted).reduce((s,o)=> s + Number(o.total||0), 0);
-        const countAll = all.length;
-        const countActive = all.filter(o=>!o.deleted).length;
-        const countDeleted = countAll - countActive;
+        renderTotals(all);
+        document.getElementById("totalsModal").style.display = "flex";
+        // cache for CSV
+        window._allOrdersCache = all;
+      }
+
+      function renderTotals(all){
+        const view = filterForModal(all);
+        const tot = view.reduce((s,o)=> s + Number(o.total||0), 0);
+        const count = view.length;
+        const countDel = view.filter(o=>o.deleted).length;
 
         $("totalsSummary").innerHTML = [
-          `<span class="chip"><b>Incasso complessivo:</b> ${totAll.toFixed(2)}€</span>`,
-          `<span class="chip"><b>Ordini totali:</b> ${countAll}</span>`,
-          `<span class="chip"><b>Attivi (in lista):</b> ${countActive} – ${totActive.toFixed(2)}€</span>`,
-          `<span class="chip"><b>Eliminati/archiviati:</b> ${countDeleted}</span>`
+          `<span class="chip"><b>Ambito:</b> ${_modalScope==="current" ? "Giornata " + CURRENT_DAY : "Tutte"}</span>`,
+          `<span class="chip"><b>Ordini:</b> ${count}</span>`,
+          `<span class="chip"><b>Eliminati:</b> ${countDel}</span>`,
+          `<span class="chip"><b>Incasso:</b> ${tot.toFixed(2)}€</span>`
         ].join(" ");
 
-        const rows = all.map(o => `
+        const rows = view.map(o => `
           <div class="row ${o.deleted?'deleted':''}" style="justify-content:space-between;border-bottom:1px dashed var(--border);padding:8px 0">
             <div>
               <div><b>${hhmm(o.createdAt)}</b> • Tav. ${o.table||""} • ${o.waiter||""}</div>
@@ -354,12 +434,7 @@
             <div><b>${Number(o.total||0).toFixed(2)}€</b>${o.deleted?' <span class="muted">(eliminato)</span>':''}</div>
           </div>
         `).join("");
-
         $("totalsList").innerHTML = rows || "<div class='muted'>Nessun ordine trovato.</div>";
-        document.getElementById("totalsModal").style.display = "flex";
-
-        // memorizzo per export veloce (opzionale)
-        window._allOrdersCache = all;
       }
 
       function closeTotals(){
@@ -372,12 +447,13 @@
       }
 
       function buildCsvRows(orders){
-        const header = ["datetime","table","waiter","total","status","deleted","items"];
+        const header = ["datetime","day","table","waiter","total","status","deleted","items"];
         const lines = [header.map(csvEscape).join(",")];
         orders.forEach(o => {
           const items = (o.items||[]).map(i => `${i.qty}x ${i.name}`).join(" | ");
           const row = [
             ymdhm(o.createdAt),
+            o.day || (o.createdAt? ymd(o.createdAt.toDate()) : ""),
             o.table||"",
             o.waiter||"",
             (Number(o.total||0).toFixed(2)),
@@ -391,29 +467,27 @@
       }
 
       async function exportCsv(){
-        // uso la cache se presente, altrimenti rileggo
-        let orders = window._allOrdersCache;
-        if (!orders){
+        let all = window._allOrdersCache;
+        if (!all){
           const qEv = query(collection(db,"orders"), where("eventCode","==",EVENT_CODE));
           const snap = await getDocs(qEv);
-          orders = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-          orders.sort((a,b)=> (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+          all = snap.docs.map(d => ({ id:d.id, ...d.data() }));
         }
-        const csv = "\ufeff" + buildCsvRows(orders); // BOM per Excel
+        const view = filterForModal(all);
+        const csv = "\ufeff" + buildCsvRows(view);
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
-        const today = new Date();
-        const pad = (n)=> String(n).padStart(2,"0");
         a.href = url;
-        a.download = `incassi_ok25_${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}_${pad(today.getHours())}${pad(today.getMinutes())}.csv`;
+        const now = new Date();
+        a.download = `incassi_ok25_${_modalScope==="current" ? ("giornata_"+CURRENT_DAY) : "tutte"}_${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}.csv`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
       }
 
-      // Stream evento
+      // Stream dell'evento, poi render in base alla giornata
       const qEv = query(collection(db,"orders"), where("eventCode","==",EVENT_CODE));
       onSnapshot(qEv, (snap) => {
         const ordini = snap.docs.map(d => ({ id:d.id, ...d.data() }));
@@ -425,11 +499,24 @@
         el.textContent = "Stream fallito: " + err.message;
       });
 
+      // Bind
       document.getElementById("addOrderBtn").addEventListener("click", salvaOrdine);
-      document.getElementById("clearAllBtn").addEventListener("click", svuotaFineSerata);
+      document.getElementById("clearDayBtn").addEventListener("click", svuotaGiornata);
+      document.getElementById("hardWipeBtn").addEventListener("click", hardWipeEvento);
       document.getElementById("totalsBtn").addEventListener("click", openTotals);
       document.getElementById("closeTotals").addEventListener("click", closeTotals);
       document.getElementById("closeTotals2").addEventListener("click", closeTotals);
+      document.getElementById("includeDeleted").addEventListener("change", ()=>{
+        if (window._allOrdersCache) renderTotals(window._allOrdersCache);
+      });
+      document.getElementById("scopeCurrent").addEventListener("click", ()=>{
+        _modalScope = "current";
+        if (window._allOrdersCache) renderTotals(window._allOrdersCache);
+      });
+      document.getElementById("scopeAll").addEventListener("click", ()=>{
+        _modalScope = "all";
+        if (window._allOrdersCache) renderTotals(window._allOrdersCache);
+      });
       document.getElementById("exportCsv").addEventListener("click", exportCsv);
 
       renderMenu();
