@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Oktober Orders – ok25 (Gruppi Bibite & Acque)</title>
+    <title>Oktober Orders – ok25 (Waiter Persist + Clear Tavolo)</title>
     <style>
       :root{
         --bg:#f7fbe9;
@@ -189,7 +189,6 @@
       const app = initializeApp(firebaseConfig);
       const db  = getFirestore(app);
 
-      // MENU & PREZZI (emoji + frizzante)
       const PRICE = {
         mass_bionda1: 11,
         mass_rossa1: 13,
@@ -247,7 +246,6 @@
       const KEYS = Object.keys(PRICE);
       const state = Object.fromEntries(KEYS.map(k=>[k,0]));
 
-      // Gruppi menu con titoli
       const GROUPS = [
         { title: "🍺 MASS 1 L", keys: ["mass_bionda1","mass_rossa1","mass_nf1"] },
         { title: "🍺 0,5 L", keys: ["bionda05","rossa05","nf05"] },
@@ -277,6 +275,17 @@
       function setDay(newDay){ CURRENT_DAY = newDay; localStorage.setItem("ok25_current_day", CURRENT_DAY); renderOrdini(_snapshotCache || []); }
       applyDayToUI();
       $("dayInput").addEventListener("change", (e)=> setDay(e.target.value));
+
+      // --- Persistenza nome cameriere ---
+      const WAITER_KEY = "ok25_waiter_name";
+      function restoreWaiter(){
+        const saved = localStorage.getItem(WAITER_KEY);
+        if (saved && $("waiterInput")) $("waiterInput").value = saved;
+      }
+      function persistWaiter(){
+        const val = ($("waiterInput")?.value || "").trim();
+        localStorage.setItem(WAITER_KEY, val);
+      }
 
       function renderMenu(){
         const wrap = $("menuList");
@@ -326,6 +335,8 @@
       }
 
       async function salvaOrdine(){
+        const waiterEl = $("waiterInput");
+        const tableEl  = $("tableInput");
         const { waiter, table, items, total } = buildOrder();
         if (!waiter || !table) { alert("Inserisci nome cameriere e tavolo"); return; }
         if (!items.length) { alert("Aggiungi almeno una quantità"); return; }
@@ -339,8 +350,14 @@
           createdAt: serverTimestamp()
         });
 
+        // reset quantità
         KEYS.forEach(k => { state[k]=0; const el=$("qty-"+k); if(el) el.textContent="0"; });
         calcTotal();
+
+        // Persisti nome e pulisci il tavolo
+        persistWaiter();
+        if (tableEl) { tableEl.value = ""; tableEl.focus(); }
+
         alert("Ordine inserito ✅");
       }
 
@@ -512,8 +529,16 @@
       document.getElementById("scopeAll").addEventListener("click", ()=>{ _modalScope = "all"; if (window._allOrdersCache) renderTotals(window._allOrdersCache); });
       document.getElementById("exportCsv").addEventListener("click", exportCsv);
 
+      // Init UI
       renderMenu();
       calcTotal();
+      restoreWaiter();
+      const waiterEl = $("waiterInput");
+      if (waiterEl){
+        waiterEl.addEventListener("input", persistWaiter);
+        waiterEl.addEventListener("change", persistWaiter);
+        waiterEl.addEventListener("blur", persistWaiter);
+      }
 
       window._advance = avanzaStato;
       window._remove  = eliminaOrdine;
