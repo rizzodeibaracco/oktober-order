@@ -1,291 +1,49 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="it">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Oktober Orders – ok25 (Light, Bold, 🍺)</title>
-    <style>
-      :root{
-        --bg:#f7fbe9;
-        --card:#ffffff;
-        --text:#1b2b16;
-        --muted:#58734a;
-        --primary:#2e7d32;
-        --primary-2:#66bb6a;
-        --accent:#f4d03f;
-        --danger:#b71c1c;
-        --border:#d9e8c6;
-      }
-      *{box-sizing:border-box}
-      body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-      .container{max-width:1100px;margin:0 auto;padding:16px}
-      h1{margin:8px 0 16px}
-      .grid{display:grid;grid-template-columns:1fr;gap:16px}
-      @media(min-width:900px){.grid{grid-template-columns:1fr 1fr}}
-      .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 6px 18px rgba(27,43,22,.06)}
-      .row{display:flex;gap:8px;align-items:center}
-      .input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:#fbfff4;color:var(--text)}
-      .btn{padding:10px 14px;border-radius:12px;border:1px solid var(--primary-2);background:linear-gradient(180deg,var(--primary-2),var(--primary));color:#fff;cursor:pointer}
-      .btn:hover{filter:brightness(1.03)}
-      .btn.ghost{background:#fff;color:var(--primary);border:1px solid var(--primary)}
-      .btn.danger{border-color:#e57373;background:linear-gradient(180deg,#ef9a9a,#e53935)}
-      .circle{width:40px;height:40px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:22px;padding:0}
-      .qtybox{display:flex;align-items:center;gap:8px;justify-content:flex-end}
-      .qtynum{min-width:28px;text-align:center;font-weight:700}
-      .row.item{justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--border)}
-      .label .price{color:var(--muted);font-size:12px;margin-left:6px}
-      .total{font-weight:800;font-size:20px;background:#fff5cc;border:1px solid #f5e487;border-radius:999px;padding:8px 12px}
-      table{width:100%;border-collapse:collapse}
-      th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
-      .badge{padding:4px 10px;border-radius:999px;font-size:12px;border:1px solid var(--border)}
-      .status-wait{background:#fffce6}
-      .status-ready{background:#e8f5e9}
-      .status-done{background:#e8f0fe}
-      .muted{color:var(--muted)}
-      .pill{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid var(--border);background:#fff8d6}
-      #errorBox{display:none;background:#ffe5e5;border:1px solid #ffb3b3;color:#590909;padding:10px;border-radius:12px;margin:12px 0;white-space:pre-wrap}
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <h1>Oktober Orders <span class="pill">evento: ok25</span></h1>
-
-      <div id="errorBox"></div>
-
-      <div class="grid">
-        <div class="card">
-          <h2>Nuovo ordine</h2>
-          <div class="row" style="gap:12px">
-            <input id="waiterInput" class="input" placeholder="Nome cameriere" />
-            <input id="tableInput" class="input" placeholder="Tavolo" />
-          </div>
-
-          <div id="menuList" style="margin-top:8px">
-            <!-- voci generate da JS -->
-          </div>
-
-          <div class="row" style="justify-content:space-between;margin-top:12px">
-            <div id="totalBox" class="total">Totale: 0,00€</div>
-            <button id="addOrderBtn" type="button" class="btn">➕ Aggiungi ordine</button>
-          </div>
-          <p class="muted" style="margin-top:10px">Suggerimento: apri questa pagina su più dispositivi. Gli ordini si sincronizzano live.</p>
-        </div>
-
-        <div class="card">
-          <h2>Ordini</h2>
-          <div id="ordersLive"></div>
-          <div class="row" style="margin-top:12px;justify-content:flex-end;gap:8px">
-            <button id="clearAllBtn" type="button" class="btn danger">🧹 Svuota fine serata</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-      import {
-        getFirestore, collection, addDoc, onSnapshot, serverTimestamp,
-        updateDoc, doc, deleteDoc, getDocs, writeBatch, query, where
-      } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
-
-      const firebaseConfig = {
-  "apiKey": "AIzaSyAZPR5tHdHgbfdhq77SERUBBsH3o3GlFro",
-  "authDomain": "oktoberfest-ordes.firebaseapp.com",
-  "projectId": "oktoberfest-ordes",
-  "storageBucket": "oktoberfest-ordes.firebasestorage.app",
-  "messagingSenderId": "836780488125",
-  "appId": "1:836780488125:web:a5d99be814b773c7f78ed4"
-};
-      const EVENT_CODE = "ok25";
-
-      const app = initializeApp(firebaseConfig);
-      const db  = getFirestore(app);
-
-      // --- MENU & PREZZI ---
-      const PRICE = { bionda05:6, bionda1:11, rossa05:7, rossa1:13, nf05:7, nf1:13, cola:4, nat:2, frizz:2 };
-
-      // Nomi "plain" per salvare su Firestore
-      const NAMES = {
-        bionda05:"Birra bionda 0,5L",
-        bionda1:"Birra bionda 1L",
-        rossa05:"Birra rossa 0,5L",
-        rossa1:"Birra rossa 1L",
-        nf05:"Non filtrata 0,5L",
-        nf1:"Non filtrata 1L",
-        cola:"Coca-Cola",
-        nat:"Acqua naturale",
-        frizz:"Acqua frizzante"
-      };
-      // Nomi "HTML" per la UI (in grassetto). 1L con emoji 🍺
-      const NAMES_HTML = {
-        bionda05:"<b>Birra bionda 0,5L</b>",
-        bionda1:"<b>🍺 Birra bionda 1L</b>",
-        rossa05:"<b>Birra rossa 0,5L</b>",
-        rossa1:"<b>🍺 Birra rossa 1L</b>",
-        nf05:"<b>Non filtrata 0,5L</b>",
-        nf1:"<b>Non filtrata 1L</b>",
-        cola:"<b>Coca-Cola</b>",
-        nat:"<b>Acqua naturale</b>",
-        frizz:"<b>Acqua frizzante</b>"
-      };
-
-      const KEYS = Object.keys(PRICE);
-      const state = Object.fromEntries(KEYS.map(k=>[k,0]));
-
-      const $ = (id) => document.getElementById(id);
-
-      function renderMenu(){
-        const wrap = $("menuList");
-        wrap.innerHTML = KEYS.map(k => `
-          <div class="row item">
-            <div class="label">${NAMES_HTML[k]} <span class="price">(${PRICE[k]}€)</span></div>
-            <div class="qtybox">
-              <button class="btn circle ghost" data-key="${k}" data-delta="-1">–</button>
-              <span class="qtynum" id="qty-${k}">0</span>
-              <button class="btn circle" data-key="${k}" data-delta="1">+</button>
-            </div>
-          </div>
-        `).join("");
-        wrap.querySelectorAll("button[data-key]").forEach(btn=>{
-          btn.addEventListener("click", ()=>{
-            const key = btn.getAttribute("data-key");
-            const delta = Number(btn.getAttribute("data-delta"));
-            adjustQty(key, delta);
-          });
-        });
-      }
-
-      function adjustQty(key, delta){
-        state[key] = Math.max(0, (state[key]||0) + delta);
-        const badge = document.getElementById("qty-"+key);
-        if (badge) badge.textContent = state[key];
-        calcTotal();
-      }
-
-      function calcTotal(){
-        const total = KEYS.reduce((s,k)=> s + (state[k]||0) * PRICE[k], 0);
-        $("totalBox").textContent = "Totale: " + total.toFixed(2) + "€";
-        return total;
-      }
-
-      function buildOrder(){
-        const waiter = $("waiterInput")?.value?.trim();
-        const table  = $("tableInput")?.value?.trim();
-        const items = KEYS.map(k => ({ key:k, name:NAMES[k], qty: state[k]||0, price: PRICE[k] }))
-                          .filter(i => i.qty>0);
-        const total = calcTotal();
-        return { waiter, table, items, total };
-      }
-
-      async function salvaOrdine(){
-        const { waiter, table, items, total } = buildOrder();
-        if (!waiter || !table) { alert("Inserisci nome cameriere e tavolo"); return; }
-        if (!items.length) { alert("Aggiungi almeno una quantità"); return; }
-
-        await addDoc(collection(db,"orders"), {
-          waiter, table, items, total,
-          status: "in_attesa",
-          eventCode: EVENT_CODE,
-          createdAt: serverTimestamp()
-        });
-
-        KEYS.forEach(k => { state[k]=0; const el=$("qty-"+k); if(el) el.textContent="0"; });
-        calcTotal();
-        alert("Ordine inserito ✅");
-      }
-
-      const STATI = ["in_attesa","pronto","consegnato"];
-      async function avanzaStato(id, statoAttuale){
-        const next = STATI[(STATI.indexOf(statoAttuale)+1) % STATI.length];
-        await updateDoc(doc(db,"orders",id), { status: next });
-      }
-      async function eliminaOrdine(id){
-        if (!confirm("Eliminare questo ordine?")) return;
-        await deleteDoc(doc(db,"orders",id));
-      }
-
-      // Doppia conferma per svuota
-      async function svuotaFineSerata(){
-        if (!confirm("Confermi di voler cancellare TUTTI gli ordini dell'evento ok25?")) return;
-        const qEv = query(collection(db,"orders"), where("eventCode","==",EVENT_CODE));
-        const snap = await getDocs(qEv);
-        if (snap.empty) { alert("Nessun ordine da cancellare."); return; }
-        const count = snap.size;
-        if (!confirm(`Seconda conferma: verranno eliminati ${count} ordini. Operazione irreversibile. Procedere?`)) return;
-        const batch = writeBatch(db);
-        snap.forEach(d => batch.delete(d.ref));
-        await batch.commit();
-        alert("Ordini cancellati");
-      }
-
-      function hhmm(ts){
-        try{
-          const d = ts?.toDate ? ts.toDate() : (ts instanceof Date ? ts : new Date());
-          return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-        }catch{ return "-"; }
-      }
-
-      function displayName(item){
-        // priorità al key se presente
-        if (item?.key && NAMES_HTML[item.key]) return NAMES_HTML[item.key];
-        // fallback: prova a mappare nome plain -> html
-        const entry = Object.entries(NAMES).find(([k,v]) => v === item?.name);
-        if (entry && NAMES_HTML[entry[0]]) return NAMES_HTML[entry[0]];
-        // ultimo fallback: bold generico del testo
-        return "<b>" + (item?.name || "") + "</b>";
-      }
-
-      function renderOrdini(ordini){
-        const wrap = $("ordersLive");
-        if (!wrap) return;
-        wrap.innerHTML = `
-          <table>
-            <thead>
-              <tr>
-                <th>Ora</th><th>Tavolo</th><th>Cameriere</th><th>Dettagli</th><th>Totale</th><th>Stato</th><th>Azioni</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${ordini.map(o => `
-                <tr>
-                  <td>${hhmm(o.createdAt)}</td>
-                  <td>${o.table||""}</td>
-                  <td>${o.waiter||""}</td>
-                  <td>${(o.items||[]).map(i => `${i.qty}× ${displayName(i)}`).join("<br>")}</td>
-                  <td>${Number(o.total||0).toFixed(2)}€</td>
-                  <td><span class="badge ${o.status==='in_attesa'?'status-wait':o.status==='pronto'?'status-ready':'status-done'}">${o.status||""}</span></td>
-                  <td>
-                    <button class="btn ghost" onclick="window._advance('${o.id}','${o.status||"in_attesa"}')">Avanza</button>
-                    <button class="btn danger" onclick="window._remove('${o.id}')">Elimina</button>
-                  </td>
-                </tr>
-              `).join("")}
-            </tbody>
-          </table>
-        `;
-      }
-
-      // Stream SOLO degli ordini dell'evento, sort client
-      const qEv = query(collection(db,"orders"), where("eventCode","==",EVENT_CODE));
-      onSnapshot(qEv, (snap) => {
-        const ordini = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-        ordini.sort((a,b)=> (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
-        renderOrdini(ordini);
-      }, (err) => {
-        const el = document.getElementById("errorBox");
-        el.style.display = "block";
-        el.textContent = "Stream fallito: " + err.message;
-      });
-
-      document.getElementById("addOrderBtn").addEventListener("click", salvaOrdine);
-      document.getElementById("clearAllBtn").addEventListener("click", svuotaFineSerata);
-
-      renderMenu();
-      calcTotal();
-
-      // expose
-      window._advance = avanzaStato;
-      window._remove  = eliminaOrdine;
-    </script>
-  </body>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crossroads APS – Oktoberstrafest 2025</title>
+<style>
+html, body {margin: 0; padding: 0; width: 100%; overflow-x: hidden; font-family: "Arial", sans-serif; background-color: #f6fdf5; color: #000; text-align: center;}
+h1 {color: #2e7d32; margin: 15px 0;}
+button {display: block; width: 90%; max-width: 500px; margin: 10px auto; padding: 14px; font-size: 1.2em; border: none; border-radius: 12px; background-color: #aeea00; font-weight: bold; cursor: pointer; color: #000;}
+button:hover {background-color: #9ccc65;}
+.popup {display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow-y: auto; background-color: rgba(0, 0, 0, 0.5);}
+.popup-content {background-color: #fff; margin: 10% auto; padding: 25px 15px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 0 10px rgba(0,0,0,0.3); position: relative;}
+.popup-content h2 {font-size: 1.5em; color: #2e7d32;}
+.popup-content p {font-size: 1.3em; margin: 8px 0; font-weight: bold;}
+.close {position: absolute; right: 20px; top: 10px; font-size: 28px; cursor: pointer;}
+#stampaTotaleBtn {margin-top: 15px; padding: 12px 20px; background-color: #2e7d32; color: white; border: none; border-radius: 10px; font-size: 1.1em; width: 100%; max-width: 300px;}
+#stampaTotaleBtn:hover {background-color: #388e3c;}
+@media (max-width: 600px) {body {font-size: 1.1em;} button {font-size: 1.1em; padding: 12px;} .popup-content {margin-top: 20%; padding: 20px;} .close {right: 15px; top: 10px; font-size: 26px;}}
+</style>
+</head>
+<body>
+<h1>Crossroads APS – Oktoberstrafest 2025</h1>
+<button id="totaleIncassiBtn">💰 Totale incassi</button>
+<button onclick="azzeraTotaliGiornata()">🧹 Svuota fine serata</button>
+<div id="popupTotale" class="popup">
+  <div class="popup-content" id="popupContent">
+    <span class="close">&times;</span>
+    <h2>Totale incassi giornata</h2>
+    <p id="dataGiornata">Data: --/--/----</p>
+    <p id="totaleGiornata">0 €</p>
+    <p id="totaleOrdini">Totale ordini: 0</p>
+    <button id="stampaTotaleBtn">🖨️ Stampa / Esporta PDF</button>
+  </div>
+</div>
+<script>
+let totaleIncassi = parseFloat(localStorage.getItem("totaleIncassi")) || 0;
+let numeroOrdini = parseInt(localStorage.getItem("numeroOrdini")) || 0;
+let dataGiornata = localStorage.getItem("dataGiornata") || new Date().toLocaleDateString("it-IT");
+function salvaTotali() {localStorage.setItem("totaleIncassi", totaleIncassi);localStorage.setItem("numeroOrdini", numeroOrdini);localStorage.setItem("dataGiornata", dataGiornata);}
+function aggiornaTotaleIncassi(importo) {totaleIncassi += importo;numeroOrdini++;salvaTotali();}
+document.getElementById("totaleIncassiBtn").addEventListener("click", () => {document.getElementById("popupTotale").style.display = "block";document.getElementById("dataGiornata").textContent = "Data: " + dataGiornata;document.getElementById("totaleGiornata").textContent = totaleIncassi.toFixed(2) + " €";document.getElementById("totaleOrdini").textContent = "Totale ordini: " + numeroOrdini;});
+document.querySelector(".close").addEventListener("click", () => {document.getElementById("popupTotale").style.display = "none";});
+window.addEventListener("click", (event) => {if (event.target == document.getElementById("popupTotale")) {document.getElementById("popupTotale").style.display = "none";}});
+function azzeraTotaliGiornata() {if (confirm("Sei sicuro di voler svuotare i totali di fine serata?")) {totaleIncassi = 0;numeroOrdini = 0;dataGiornata = new Date().toLocaleDateString("it-IT");salvaTotali();alert("Totali azzerati per la nuova giornata!");}}
+document.getElementById("stampaTotaleBtn").addEventListener("click", () => {const contenuto = document.getElementById("popupContent").innerHTML;const oraCorrente = new Date().toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });const dataOggi = new Date().toLocaleDateString("it-IT");const finestra = window.open("", "_blank");finestra.document.write(`<html><head><title>Totale Incassi - Crossroads APS</title><style>body{font-family:Arial,sans-serif;text-align:center;padding:40px;color:#000;}h1{font-size:1.6em;color:#2e7d32;margin-bottom:5px;}h3{font-size:1.2em;color:#333;margin-top:0;margin-bottom:30px;}h2{color:#2e7d32;margin-top:20px;}p{font-size:1.3em;font-weight:bold;margin:8px 0;}#stampaTotaleBtn,.close{display:none;}.footer{margin-top:40px;font-size:0.9em;color:gray;}</style></head><body><h1>Crossroads APS – Oktoberstrafest 2025</h1><h3>Riepilogo incassi bar</h3>${contenuto}<div class="footer"><p>Stampato da App Ordini Bar</p><p>Data: ${dataOggi} – Ore: ${oraCorrente}</p></div></body></html>`);finestra.document.close();finestra.print();});
+</script>
+</body>
 </html>
