@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Oktober Orders – ok25 (Waiter Persist + Clear Tavolo)</title>
+    <title>Oktober Orders – ok25 (Dolci dopo Acque)</title>
     <style>
       :root{
         --bg:#f7fbe9;
@@ -204,7 +204,9 @@
         te_limone: 4,
         te_pesca: 4,
         acqua_nat: 2,
-        acqua_frizz: 2
+        acqua_frizz: 2,
+        torta_sacher: 4,
+        crostata_veg: 4
       };
 
       const NAMES = {
@@ -222,7 +224,9 @@
         te_limone: "Tè al limone",
         te_pesca: "Tè alla pesca",
         acqua_nat: "Acqua naturale",
-        acqua_frizz: "Acqua frizzante"
+        acqua_frizz: "Acqua frizzante",
+        torta_sacher: "Torta Sacher",
+        crostata_veg: "Crostata veg di marmellata"
       };
 
       const NAMES_HTML = {
@@ -240,17 +244,21 @@
         te_limone: "<b>🥤 Tè al limone</b>",
         te_pesca: "<b>🥤 Tè alla pesca</b>",
         acqua_nat: "<b>💧 Acqua naturale</b>",
-        acqua_frizz: "<b>💧 Acqua frizzante</b>"
+        acqua_frizz: "<b>💧 Acqua frizzante</b>",
+        torta_sacher: "<b>🍰 Torta Sacher</b>",
+        crostata_veg: "<b>🍰 Crostata veg di marmellata</b>"
       };
 
       const KEYS = Object.keys(PRICE);
       const state = Object.fromEntries(KEYS.map(k=>[k,0]));
 
+      // ORDER: Dolci moved after Acque
       const GROUPS = [
         { title: "🍺 MASS 1 L", keys: ["mass_bionda1","mass_rossa1","mass_nf1"] },
         { title: "🍺 0,5 L", keys: ["bionda05","rossa05","nf05"] },
         { title: "🥤 Bibite 4€", keys: ["coca","coca_zero","fanta","te_limone","te_pesca"] },
-        { title: "💧 Acque 2€", keys: ["acqua_nat","acqua_frizz"] }
+        { title: "💧 Acque 2€", keys: ["acqua_nat","acqua_frizz"] },
+        { title: "🍰 Dolci 4€", keys: ["torta_sacher","crostata_veg"] }
       ];
 
       const $ = (id) => document.getElementById(id);
@@ -276,7 +284,7 @@
       applyDayToUI();
       $("dayInput").addEventListener("change", (e)=> setDay(e.target.value));
 
-      // --- Persistenza nome cameriere ---
+      // Persist waiter name
       const WAITER_KEY = "ok25_waiter_name";
       function restoreWaiter(){
         const saved = localStorage.getItem(WAITER_KEY);
@@ -335,7 +343,6 @@
       }
 
       async function salvaOrdine(){
-        const waiterEl = $("waiterInput");
         const tableEl  = $("tableInput");
         const { waiter, table, items, total } = buildOrder();
         if (!waiter || !table) { alert("Inserisci nome cameriere e tavolo"); return; }
