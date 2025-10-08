@@ -1,10 +1,9 @@
-
 <!doctype html>
 <html lang="it">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Oktober Orders – ok25 (Dolci dopo Acque)</title>
+    <title>Oktober Orders – ok25 (Nuovi prezzi)</title>
     <style>
       :root{
         --bg:#f7fbe9;
@@ -198,13 +197,13 @@
         nf05: 7,
         birra_gf: 5,
         birra_analc05: 4,
-        coca: 4,
-        coca_zero: 4,
-        fanta: 4,
-        te_limone: 4,
-        te_pesca: 4,
-        acqua_nat: 2,
-        acqua_frizz: 2,
+        coca: 3,
+        coca_zero: 3,
+        fanta: 3,
+        te_limone: 3,
+        te_pesca: 3,
+        acqua_nat: 1.5,
+        acqua_frizz: 1.5,
         torta_sacher: 4,
         crostata_veg: 4
       };
@@ -252,12 +251,12 @@
       const KEYS = Object.keys(PRICE);
       const state = Object.fromEntries(KEYS.map(k=>[k,0]));
 
-      // ORDER: Dolci moved after Acque
+      // ORDER: Dolci after Acque
       const GROUPS = [
         { title: "🍺 MASS 1 L", keys: ["mass_bionda1","mass_rossa1","mass_nf1"] },
         { title: "🍺 0,5 L", keys: ["bionda05","rossa05","nf05"] },
-        { title: "🥤 Bibite 4€", keys: ["coca","coca_zero","fanta","te_limone","te_pesca"] },
-        { title: "💧 Acque 2€", keys: ["acqua_nat","acqua_frizz"] },
+        { title: "🥤 Bibite 3€", keys: ["coca","coca_zero","fanta","te_limone","te_pesca"] },
+        { title: "💧 Acque 1,50€", keys: ["acqua_nat","acqua_frizz"] },
         { title: "🍰 Dolci 4€", keys: ["torta_sacher","crostata_veg"] }
       ];
 
@@ -448,7 +447,7 @@
       function filterForModal(all){
         const includeDeleted = $("includeDeleted").checked;
         let arr = all;
-        if (_modalScope === "current"){ arr = arr.filter(o => (o.day || ymd((o.createdAt||{}).toDate?.() || new Date())) === CURRENT_DAY); }
+        if (_modalScope === "current"){ arr = all.filter(o => (o.day || ymd((o.createdAt||{}).toDate?.() || new Date())) === CURRENT_DAY); }
         if (!includeDeleted){ arr = arr.filter(o => !o.deleted); }
         return arr.sort((a,b)=> (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
       }
