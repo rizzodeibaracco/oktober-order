@@ -1,247 +1,80 @@
 
 <!doctype html><html lang="it"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Oktober Orders – ok25 (completo)</title>
+<title>DIAG – Menu bibite</title>
 <style>
-:root{--bg:#f7fbe9;--card:#fff;--text:#1b2b16;--muted:#58734a;--primary:#2e7d32;--primary-2:#66bb6a;--border:#d9e8c6}
-*{box-sizing:border-box}html,body{max-width:100%;overflow-x:hidden}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:18px}
-.container{max-width:1100px;margin:0 auto;padding:16px}header.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
-.btn{padding:12px 16px;border-radius:14px;border:1px solid var(--primary-2);background:linear-gradient(180deg,var(--primary-2),var(--primary));color:#fff;cursor:pointer;font-size:18px}
-.btn.ghost{background:#fff;color:#2e7d32;border:1px solid #2e7d32}
-.btn.alt{border-color:#f6d365;background:linear-gradient(180deg,#ffe082,#f4b400);color:#1b2b16}
-.btn.warn{border-color:#ffb74d;background:linear-gradient(180deg,#ffd54f,#fb8c00);color:#1b2b16}
-.btn.danger{border-color:#e57373;background:linear-gradient(180deg,#ef9a9a,#e53935)}
-.grid{display:grid;grid-template-columns:1fr;gap:16px}@media(min-width:900px){.grid{grid-template-columns:1fr 1fr}}
-.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 6px 18px rgba(27,43,22,.06)}
-.row{display:flex;gap:12px;align-items:center}.input{width:100%;padding:14px 16px;border-radius:14px;border:1px solid var(--border);background:#fbfff4;color:var(--text)}
-.qtybox{display:flex;align-items:center;gap:10px;justify-content:flex-end}.qtynum{min-width:32px;text-align:center;font-weight:800;font-size:20px}
-.row.item{justify-content:space-between;padding:10px 0;border-bottom:1px dashed var(--border)}.label .price{color:#58734a;font-size:14px;margin-left:8px}
-.total{font-weight:900;font-size:22px;background:#fff5cc;border:1px solid #f5e487;border-radius:999px;padding:10px 14px}
-.group{margin-top:8px}.group-title{font-weight:900;background:#fff8d6;border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:8px 0;}
-.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
-table{width:100%;border-collapse:collapse;table-layout:fixed;word-wrap:break-word}th,td{padding:12px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
-th{font-size:16px}td{font-size:18px}.dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:8px;vertical-align:middle}
-.red{background:#ff5252}.green{background:#00c853}.blink{animation:blink 1.4s ease-in-out infinite}@keyframes blink{0%,100%{opacity:1}50%{opacity:.45}}
-@media(max-width:720px){table thead{display:none}table,tbody,tr,td{display:block;width:100%}tr{border:1px solid var(--border);border-radius:12px;padding:8px;margin:10px 0;background:#fff}td{border-bottom:none;padding:8px 8px}td::before{content:attr(data-label) ": ";font-weight:700;margin-right:6px;color:#2a3b1f}td.actions{display:flex;gap:8px}}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;background:#f7fbe9;color:#1b2b16}
+  .container{max-width:900px;margin:0 auto;padding:16px}
+  .card{background:#fff;border:1px solid #d9e8c6;border-radius:16px;padding:16px;margin-top:12px}
+  .row{display:flex;align-items:center;justify-content:space-between;border-bottom:1px dashed #d9e8c6;padding:10px 0}
+  .qty{display:flex;align-items:center;gap:10px}
+  .btn{padding:10px 14px;border-radius:12px;border:1px solid #66bb6a;background:linear-gradient(180deg,#66bb6a,#2e7d32);color:#fff;cursor:pointer}
+  .btn.ghost{background:#fff;color:#2e7d32;border:1px solid #2e7d32}
+  .group{margin-top:12px}.group h3{margin:0 0 8px;font-size:18px;background:#fff8d6;border:1px solid #d9e8c6;padding:8px;border-radius:10px}
 </style></head><body>
 <div class="container">
-  <header class="top">
-    <h1 style="margin:0">Oktober Orders <span style="display:inline-block;padding:6px 12px;border:1px solid var(--border);background:#fff8d6;border-radius:999px">evento: ok25</span></h1>
-    <a href="./orders.html" class="btn ghost">📋 Ordini</a>
-  </header>
-
-  <div class="grid">
-    <div class="card">
-      <h2>Nuovo ordine</h2>
-      <div class="row">
-        <input id="waiterInput" class="input" placeholder="Nome cameriere" />
-        <input id="tableInput" class="input" placeholder="Tavolo" inputmode="numeric" />
-      </div>
-      <div id="menuList" style="margin-top:8px"></div>
-      <div class="row" style="justify-content:space-between;margin-top:12px">
-        <div id="totalBox" class="total">Totale: 0,00€</div>
-        <button id="addOrderBtn" type="button" class="btn">➕ Aggiungi ordine</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Ordini</h2>
-      <div class="toolbar">
-        <label for="dayInput">Giornata:</label>
-        <input type="date" id="dayInput" class="input" style="max-width:220px" />
-        <span style="color:#58734a">Mostro solo gli ordini <b>non eliminati</b> della giornata scelta</span>
-      </div>
-      <div id="ordersLive"></div>
-      <div class="row" style="margin-top:12px;justify-content:flex-end;gap:8px;flex-wrap:wrap">
-        <button id="totalsBtn" type="button" class="btn alt">💶 Incassi totali</button>
-        <button id="clearDayBtn" type="button" class="btn warn">🧹 Svuota giornata</button>
-        <button id="hardWipeBtn" type="button" class="btn danger">🗑️ Elimina storico evento</button>
-      </div>
-    </div>
-  </div>
+  <h1>DIAG – Menu Bibite</h1>
+  <div id="menu" class="card"></div>
+  <div style="margin-top:10px"><span id="sum" style="font-weight:800">Totale: 0,00€</span></div>
 </div>
-
-<!-- Modal -->
-<div id="totalsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);align-items:center;justify-content:center;padding:16px;z-index:9999">
-  <div style="max-width:900px;width:100%;max-height:85vh;overflow:auto;background:#fff;border-radius:16px;border:1px solid #d9e8c6;box-shadow:0 20px 60px rgba(0,0,0,.25)">
-    <header style="padding:14px 16px;border-bottom:1px solid #d9e8c6;display:flex;justify-content:space-between;align-items:center">
-      <strong>Incassi totali – evento ok25</strong>
-      <button id="closeTotals" class="btn ghost">Chiudi</button>
-    </header>
-    <div style="padding:16px">
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <label>Ambito:</label>
-          <button id="scopeCurrent" class="btn ghost">Giornata corrente</button>
-          <button id="scopeAll" class="btn ghost">Tutte</button>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <label for="includeDeleted">Includi eliminati</label>
-          <input type="checkbox" id="includeDeleted" checked />
-        </div>
-      </div>
-      <div id="totalsSummary" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px"></div>
-      <div id="totalsList"></div>
-    </div>
-    <div style="padding:14px 16px;border-top:1px solid #d9e8c6;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap">
-      <div><button id="exportCsv" class="btn alt">⬇️ Esporta CSV (vista)</button></div>
-      <div><button id="closeTotals2" class="btn">OK</button></div>
-    </div>
-  </div>
-</div>
-
-<script type="module">
-  import {{ initializeApp }} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-  import {{ getFirestore, collection, addDoc, onSnapshot, serverTimestamp, updateDoc, doc, writeBatch, getDocs, query, where }} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
-
-  const firebaseConfig = {
-  "apiKey": "AIzaSyAZPR5tHdHgbfdhq77SERUBBsH3o3GlFro",
-  "authDomain": "oktoberfest-ordes.firebaseapp.com",
-  "projectId": "oktoberfest-ordes",
-  "storageBucket": "oktoberfest-ordes.firebasestorage.app",
-  "messagingSenderId": "836780488125",
-  "appId": "1:836780488125:web:a5d99be814b773c7f78ed4"
-};
-  const EVENT_CODE = "ok25";
-  const app = initializeApp(firebaseConfig);
-  const db  = getFirestore(app);
-
-  const PRICE = {{ mass_bionda1:11, mass_rossa1:13, mass_nf1:13, bionda05:6, rossa05:7, nf05:7, birra_gf:5, birra_analc05:4, coca:3, coca_zero:3, fanta:3, te_limone:3, te_pesca:3, acqua_nat:1.5, acqua_frizz:1.5, torta_sacher:4, crostata_veg:4 }};
-  const NAMES = {{ mass_bionda1:"MASS Wieninger bionda 1 L", mass_rossa1:"MASS Wieninger rossa 1 L", mass_nf1:"MASS Wieninger non filtrata 1 L", bionda05:"Wieninger bionda 0,5 L", rossa05:"Wieninger rossa 0,5 L", nf05:"Wieninger non filtrata 0,5 L", birra_gf:"Birra gluten free", birra_analc05:"Birra analcolica 0,5 L", coca:"Coca-Cola", coca_zero:"Coca-Cola Zero", fanta:"Fanta", te_limone:"Tè al limone", te_pesca:"Tè alla pesca", acqua_nat:"Acqua naturale", acqua_frizz:"Acqua frizzante", torta_sacher:"Torta Sacher", crostata_veg:"Crostata veg di marmellata" }};
-  const NAMES_HTML = {{
-    mass_bionda1:"<b>🍺 MASS Wieninger bionda 1 L</b>", mass_rossa1:"<b>🍺 MASS Wieninger rossa 1 L</b>", mass_nf1:"<b>🍺 MASS Wieninger non filtrata 1 L</b>",
-    bionda05:"<b>Wieninger bionda 0,5 L</b>", rossa05:"<b>Wieninger rossa 0,5 L</b>", nf05:"<b>Wieninger non filtrata 0,5 L</b>",
-    birra_gf:"<b>Birra gluten free</b>", birra_analc05:"<b>Birra analcolica 0,5 L</b>",
-    coca:"<b>🥤 Coca-Cola</b>", coca_zero:"<b>🥤 Coca-Cola Zero</b>", fanta:"<b>🥤 Fanta</b>", te_limone:"<b>🥤 Tè al limone</b>", te_pesca:"<b>🥤 Tè alla pesca</b>",
-    acqua_nat:"<b>💧 Acqua naturale</b>", acqua_frizz:"<b>💧 Acqua frizzante</b>", torta_sacher:"<b>🍰 Torta Sacher</b>", crostata_veg:"<b>🍰 Crostata veg di marmellata</b>"
-  }};
-  const KEYS = Object.keys(PRICE);
-  const state = Object.fromEntries(KEYS.map(k=>[k,0]));
-  const GROUPS = [
-    {{ title:"🍺 MASS 1 L", keys:["mass_bionda1","mass_rossa1","mass_nf1"] }},
-    {{ title:"🍺 0,5 L", keys:["bionda05","rossa05","nf05"] }},
-    {{ title:"🥤 Bibite 3€", keys:["coca","coca_zero","fanta","te_limone","te_pesca"] }},
-    {{ title:"💧 Acque 1,50€", keys:["acqua_nat","acqua_frizz"] }},
-    {{ title:"🍰 Dolci 4€", keys:["torta_sacher","crostata_veg"] }}
+<script>
+  var PRICE={
+    mass_bionda1:11, mass_rossa1:13, mass_nf1:13,
+    bionda05:6, rossa05:7, nf05:7,
+    birra_gf:5, birra_analc05:4,
+    coca:3, coca_zero:3, fanta:3, te_limone:3, te_pesca:3,
+    acqua_nat:1.5, acqua_frizz:1.5,
+    torta_sacher:4, crostata_veg:4
+  };
+  var LABEL={
+    mass_bionda1:"<b>🍺 MASS Wieninger bionda 1 L</b>",
+    mass_rossa1:"<b>🍺 MASS Wieninger rossa 1 L</b>",
+    mass_nf1:"<b>🍺 MASS Wieninger non filtrata 1 L</b>",
+    bionda05:"<b>Wieninger bionda 0,5 L</b>",
+    rossa05:"<b>Wieninger rossa 0,5 L</b>",
+    nf05:"<b>Wieninger non filtrata 0,5 L</b>",
+    birra_gf:"<b>Birra gluten free</b>",
+    birra_analc05:"<b>Birra analcolica 0,5 L</b>",
+    coca:"<b>🥤 Coca-Cola</b>", coca_zero:"<b>🥤 Coca-Cola Zero</b>",
+    fanta:"<b>🥤 Fanta</b>", te_limone:"<b>🥤 Tè al limone</b>", te_pesca:"<b>🥤 Tè alla pesca</b>",
+    acqua_nat:"<b>💧 Acqua naturale</b>", acqua_frizz:"<b>💧 Acqua frizzante</b>",
+    torta_sacher:"<b>🍰 Torta Sacher</b>", crostata_veg:"<b>🍰 Crostata veg di marmellata</b>"
+  };
+  var GROUPS=[
+    {title:"🍺 MASS 1 L", keys:["mass_bionda1","mass_rossa1","mass_nf1"]},
+    {title:"🍺 0,5 L", keys:["bionda05","rossa05","nf05"]},
+    {title:"🥤 Bibite 3€", keys:["coca","coca_zero","fanta","te_limone","te_pesca"]},
+    {title:"💧 Acque 1,50€", keys:["acqua_nat","acqua_frizz"]},
+    {title:"🍰 Dolci 4€", keys:["torta_sacher","crostata_veg"]}
   ];
-
-  const $ = id => document.getElementById(id);
-  const pad = n => String(n).padStart(2,"0");
-  const ymd = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
-  const hhmm = ts => {{ try{{ const d = ts?.toDate ? ts.toDate() : new Date(); return d.toLocaleTimeString([], {{hour:'2-digit', minute:'2-digit'}}); }}catch{{ return "-"; }} }};
-  const ymdhm = ts => {{ try{{ const d = ts?.toDate ? ts.toDate() : (ts instanceof Date ? ts : new Date()); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes()); }}catch{{ return "-"; }} }};
-
-  let CURRENT_DAY = localStorage.getItem("ok25_current_day") || ymd(new Date());
-  const applyDayToUI = () => {{ const input = $("dayInput"); if (input) input.value = CURRENT_DAY; }};
-  const setDay = (newDay) => {{ CURRENT_DAY = newDay; localStorage.setItem("ok25_current_day", CURRENT_DAY); renderOrdini(_snapshotCache || []); }};
-  applyDayToUI(); $("dayInput").addEventListener("change", e=> setDay(e.target.value));
-
-  const WAITER_KEY = "ok25_waiter_name";
-  const restoreWaiter = () => {{ const s = localStorage.getItem(WAITER_KEY); if (s && $("waiterInput")) $("waiterInput").value = s; }};
-  const persistWaiter = () => {{ localStorage.setItem(WAITER_KEY, ($("waiterInput")?.value||"").trim()); }};
-
-  function renderMenu(){
-    const wrap = $("menuList");
-    wrap.innerHTML = GROUPS.map(g => {
-      const items = g.keys.map(k => `
-        <div class="row item">
-          <div class="label">${NAMES_HTML[k]} <span class="price">(${PRICE[k]}€)</span></div>
-          <div class="qtybox">
-            <button class="btn" style="background:#fff;color:#2e7d32;border:1px solid #66bb6a" data-key="${k}" data-delta="-1">–</button>
-            <span class="qtynum" id="qty-${k}">0</span>
-            <button class="btn" data-key="${k}" data-delta="1">+</button>
-          </div>
-        </div>`).join("");
-      return `<div class="group"><div class="group-title">${g.title}</div>${items}</div>`;
-    }).join("");
-
-    wrap.querySelectorAll("button[data-key]").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        const key = btn.getAttribute("data-key");
-        const delta = Number(btn.getAttribute("data-delta"));
-        state[key] = Math.max(0, (state[key]||0) + delta);
-        const el = document.getElementById("qty-"+key); if(el) el.textContent = state[key];
-        calcTotal();
+  var state={}; Object.keys(PRICE).forEach(function(k){state[k]=0;});
+  function render(){
+    var wrap=document.getElementById("menu");
+    var html="";
+    GROUPS.forEach(function(g){
+      html+='<div class="group"><h3>'+g.title+'</h3>';
+      g.keys.forEach(function(k){
+        html+='<div class="row"><div class="label">'+LABEL[k]+' <span style="color:#58734a;font-size:14px">('+(PRICE[k])+'€)</span></div>'+
+              '<div class="qty"><button class="btn ghost" data-k="'+k+'" data-d="-1">–</button>'+
+              '<span id="q-'+k+'" style="min-width:34px;text-align:center;font-weight:800">'+state[k]+'</span>'+
+              '<button class="btn" data-k="'+k+'" data-d="1">+</button></div></div>';
+      });
+      html+='</div>';
+    });
+    wrap.innerHTML=html;
+    wrap.querySelectorAll("button[data-k]").forEach(function(b){
+      b.addEventListener("click", function(){
+        var key=this.getAttribute("data-k"); var d=parseInt(this.getAttribute("data-d"),10);
+        state[key]=Math.max(0,(state[key]||0)+d);
+        document.getElementById("q-"+key).textContent=state[key];
+        calc();
       });
     });
   }
-
-  const calcTotal = () => { const tot = KEYS.reduce((s,k)=> s+(state[k]||0)*PRICE[k],0); $("totalBox").textContent = "Totale: " + tot.toFixed(2) + "€"; return tot; };
-  const buildOrder = () => { const waiter=$("waiterInput")?.value?.trim(); const table=$("tableInput")?.value?.trim(); const items=KEYS.map(k=>({key:k,name:NAMES[k],qty:state[k]||0,price:PRICE[k]})).filter(i=>i.qty>0); const total=calcTotal(); return {waiter,table,items,total}; };
-
-  async function salvaOrdine(){
-    const tableEl=$("tableInput");
-    const { waiter, table, items, total } = buildOrder();
-    if (!waiter || !table) { alert("Inserisci nome cameriere e tavolo"); return; }
-    if (!items.length) { alert("Aggiungi almeno una quantità"); return; }
-    await addDoc(collection(db,"orders"), { waiter, table, items, total, status:"in_attesa", eventCode:EVENT_CODE, deleted:false, day:CURRENT_DAY, createdAt: serverTimestamp() });
-    Object.keys(state).forEach(k=>{ state[k]=0; const el=$("qty-"+k); if(el) el.textContent="0"; }); calcTotal();
-    persistWaiter(); if (tableEl) { tableEl.value=""; tableEl.focus(); }
-    alert("Ordine inserito ✅");
+  function calc(){
+    var t=0; Object.keys(PRICE).forEach(function(k){ t+= (state[k]||0)*PRICE[k]; });
+    document.getElementById("sum").textContent="Totale: "+t.toFixed(2).replace(".",",")+"€";
   }
-
-  const STATI=["in_attesa","pronto","consegnato","eliminato"];
-  const avanzaStato = async (id, s) => { const next=STATI[(STATI.indexOf(s)+1)%STATI.length]; await updateDoc(doc(db,"orders",id), { status: next }); };
-  const eliminaOrdine = async (id) => { if(!confirm("Eliminare questo ordine (archiviazione)?")) return; await updateDoc(doc(db,"orders",id), { deleted:true, status:"eliminato" }); };
-
-  const dot = (o) => o.status==="in_attesa" ? '<span class="dot red"></span>' : (o.status==="pronto" ? '<span class="dot green"></span>' : '');
-  const rowBlinkCls = (o) => (o.status==="in_attesa" || o.status==="pronto") ? "blink" : "";
-
-  let _snapshotCache=[];
-  function renderOrdini(arr){
-    _snapshotCache = arr;
-    const wrap = document.getElementById("ordersLive");
-    const vis = arr.filter(o => !o.deleted && (o.day||"")===(CURRENT_DAY));
-    wrap.innerHTML = `
-      <table>
-        <thead><tr><th>Ora</th><th>Tavolo</th><th>Cameriere</th><th>Dettagli</th><th>Totale</th><th>Stato</th><th>Azioni</th></tr></thead>
-        <tbody>
-          ${vis.map(o => `
-            <tr class="${rowBlinkCls(o)}">
-              <td data-label="Ora">${hhmm(o.createdAt)}</td>
-              <td data-label="Tavolo" style="font-weight:900;font-size:20px">${o.table||""}</td>
-              <td data-label="Cameriere">${o.waiter||""}</td>
-              <td data-label="Dettagli">${dot(o)} ${(o.items||[]).map(i => i.qty+"× "+i.name).join("<br>")}</td>
-              <td data-label="Totale"><b>${Number(o.total||0).toFixed(2)}€</b></td>
-              <td data-label="Stato">${o.status||""}</td>
-              <td class="actions" data-label="Azioni">
-                <button class="btn ghost" onclick="window._advance('${o.id}','${o.status||"in_attesa"}')">Avanza</button>
-                <button class="btn danger" onclick="window._remove('${o.id}')">Elimina</button>
-              </td>
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>`;
-  }
-
-  const qEv = query(collection(db,"orders"), where("eventCode","==",EVENT_CODE));
-  onSnapshot(qEv, snap => { const a=snap.docs.map(d=>({id:d.id,...d.data()})); a.sort((x,y)=>(y.createdAt?.seconds||0)-(x.createdAt?.seconds||0)); renderOrdini(a); });
-
-  // Registro incassi
-  let _modalScope = "current";
-  function filterForModal(all){ const includeDeleted = document.getElementById("includeDeleted").checked; let arr = all; if (_modalScope==="current") arr = arr.filter(o => (o.day||ymd((o.createdAt||{}).toDate?.()||new Date()))===CURRENT_DAY); if (!includeDeleted) arr = arr.filter(o=>!o.deleted); return arr.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)); }
-  async function openTotals(){ const snap = await getDocs(qEv); const all = snap.docs.map(d=>({id:d.id,...d.data()})); window._allOrdersCache=all; renderTotals(all); document.getElementById("totalsModal").style.display="flex"; }
-  function renderTotals(all){ const view=filterForModal(all); const tot=view.reduce((s,o)=>s+Number(o.total||0),0); const count=view.length; const countDel=view.filter(o=>o.deleted).length; document.getElementById("totalsSummary").innerHTML=[`<span style='background:#fff8d6;border:1px solid #d9e8c6;border-radius:999px;padding:6px 10px'><b>Ambito:</b> ${_modalScope==="current"?"Giornata "+CURRENT_DAY:"Tutte"}</span>`,`<span style='background:#fff8d6;border:1px solid #d9e8c6;border-radius:999px;padding:6px 10px'><b>Ordini:</b> ${count}</span>`,`<span style='background:#fff8d6;border:1px solid #d9e8c6;border-radius:999px;padding:6px 10px'><b>Eliminati:</b> ${countDel}</span>`,`<span style='background:#fff8d6;border:1px solid #d9e8c6;border-radius:999px;padding:6px 10px'><b>Incasso:</b> ${tot.toFixed(2)}€</span>`].join(" "); document.getElementById("totalsList").innerHTML=view.map(o=>`<div class='row ${o.deleted?"deleted":""}' style='justify-content:space-between;border-bottom:1px dashed #d9e8c6;padding:8px 0'><div><div><b>${hhmm(o.createdAt)}</b> • Tav. ${o.table||""} • ${o.waiter||""}</div><div style='color:#58734a'>${(o.items||[]).map(i=>i.qty+"× "+i.name).join(", ")}</div></div><div><b>${Number(o.total||0).toFixed(2)}€</b>${o.deleted?" <span style='color:#58734a'>(eliminato)</span>":""}</div></div>`).join("") || "<div style='color:#58734a'>Nessun ordine trovato.</div>"; }
-  function closeTotals(){ document.getElementById("totalsModal").style.display="none"; }
-  function csvEscape(s){ s=(s==null?"":String(s)); return '"' + s.replace(/"/g,'""') + '"'; }
-  function buildCsvRows(orders){ const header=["datetime","day","table","waiter","total","status","deleted","items"]; const lines=[header.map(csvEscape).join(",")]; orders.forEach(o=>{ const items=(o.items||[]).map(i=>i.qty+"x "+i.name).join(" | "); const row=[ ymdhm(o.createdAt), o.day || (o.createdAt? ymd(o.createdAt.toDate()):""), o.table||"", o.waiter||"", Number(o.total||0).toFixed(2), o.status||"", o.deleted?"true":"false", items ].map(csvEscape).join(","); lines.push(row); }); return lines.join("\n"); }
-  async function exportCsv(){ let all = window._allOrdersCache; if (!all){ const snap = await getDocs(qEv); all = snap.docs.map(d=>({id:d.id,...d.data()})); } const view = filterForModal(all); const csv="\ufeff"+buildCsvRows(view); const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); const now=new Date(); a.href=url; a.download=`incassi_ok25_${_modalScope==="current" ? ("giornata_"+CURRENT_DAY) : "tutte"}_${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}.csv`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
-
-  async function svuotaGiornata(){ if(!confirm(`Confermi archiviazione della giornata ${CURRENT_DAY}?`)) return; const snap=await getDocs(qEv); const toArc=snap.docs.filter(d=>(d.data().day||ymd((d.data().createdAt||{}).toDate?.()||new Date()))===CURRENT_DAY); if(!toArc.length) return alert("Nessun ordine da archiviare."); if(!confirm(`Seconda conferma: ${toArc.length} ordini.`)) return; const batch=writeBatch(db); toArc.forEach(d=>batch.update(d.ref,{deleted:true,status:"eliminato",deletedAt:serverTimestamp()})); await batch.commit(); alert("Giornata archiviata"); }
-  async function hardWipeEvento(){ if(!confirm("⚠️ Elimina DEFINITIVAMENTE tutti gli ordini ok25?")) return; if(!confirm("Seconda conferma: i dati NON saranno recuperabili.")) return; const parola=prompt("Terza conferma: scrivi OK25"); if((parola||"").toUpperCase()!=="OK25") return alert("Annullato"); const snap=await getDocs(qEv); if(snap.empty) return alert("Non ci sono ordini."); const batch=writeBatch(db); snap.forEach(d=>batch.delete(d.ref)); await batch.commit(); alert("Storico evento eliminato"); }
-
-  document.getElementById("addOrderBtn").addEventListener("click", salvaOrdine);
-  document.getElementById("totalsBtn").addEventListener("click", openTotals);
-  document.getElementById("closeTotals").addEventListener("click", closeTotals);
-  document.getElementById("closeTotals2").addEventListener("click", closeTotals);
-  document.getElementById("includeDeleted").addEventListener("change", ()=>{ if(window._allOrdersCache) renderTotals(window._allOrdersCache); });
-  document.getElementById("scopeCurrent").addEventListener("click", ()=>{ _modalScope="current"; if(window._allOrdersCache) renderTotals(window._allOrdersCache); });
-  document.getElementById("scopeAll").addEventListener("click", ()=>{ _modalScope="all"; if(window._allOrdersCache) renderTotals(window._allOrdersCache); });
-  document.getElementById("exportCsv").addEventListener("click", exportCsv);
-  document.getElementById("clearDayBtn").addEventListener("click", svuotaGiornata);
-  document.getElementById("hardWipeBtn").addEventListener("click", hardWipeEvento);
-
-  renderMenu(); calcTotal(); restoreWaiter();
-  window._advance=avanzaStato; window._remove=eliminaOrdine;
+  render(); calc();
 </script>
 </body></html>
