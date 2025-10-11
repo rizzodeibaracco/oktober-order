@@ -1,55 +1,31 @@
-<!doctype html>
-<html lang="it">
-<head>
-<meta charset="utf-8">
+
+<!doctype html><html lang="it"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ordini – ok25</title>
 <style>
-  :root{
-    --bg:#10170f; --card:#162216; --text:#eaf6e5; --muted:#9fc19a;
-    --border:#274427; --ok:#00c853; --wait:#ff5252;
-  }
-  *{box-sizing:border-box} html,body{max-width:100%;overflow-x:hidden}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-  .topbar{position:sticky;top:0;background:#0f170f;padding:10px 14px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;z-index:5}
-  .topbar .title{font-size:20px;font-weight:900;margin-right:auto}
-  .topbar .input{background:#0f1b0f;border:1px solid var(--border);border-radius:10px;padding:8px 10px;color:var(--text)}
-  .list{padding:12px;display:grid;gap:12px}
-  .order{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;display:grid;grid-template-columns: 1fr auto;gap:10px;align-items:center}
-  .order.blink{animation: blink 1.4s ease-in-out infinite}
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.45} }
-  .tableBig{font-size:38px;font-weight:900;line-height:1;margin:0 0 4px}
-  .meta{color:var(--muted);font-size:14px}
-  .details{font-size:18px}
-  .total{font-weight:900;font-size:26px; background:#263b18; border:1px solid #355525; padding:6px 10px; border-radius:12px; display:inline-block}
-  .dot{width:14px;height:14px;border-radius:50%;display:inline-block;margin-right:8px;vertical-align:middle}
-  .dot.red{background:var(--wait)} .dot.green{background:var(--ok)}
-  .state{font-weight:800;display:inline-flex;align-items:center;gap:8px}
-  .state.pronto{color:#a5e8b0}
-  .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-  .btn{padding:10px 14px;border-radius:12px;border:1px solid #315a2e;background:#1d301d;color:#c8f5bf;cursor:pointer;font-size:16px}
-  .btn:hover{filter:brightness(1.1)}
-  .footer{position:sticky;bottom:0;background:#0f170f;border-top:1px solid var(--border);padding:10px 12px}
-  .back{width:100%;padding:14px;border-radius:14px;border:1px solid #315a2e;background:#1d301d;color:#c8f5bf;font-size:18px}
-</style>
-</head>
-<body>
+:root{--bg:#10170f;--card:#162216;--text:#eaf6e5;--muted:#9fc19a;--border:#274427;--ok:#00c853;--wait:#ff5252}
+*{box-sizing:border-box}html,body{max-width:100%;overflow-x:hidden}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.topbar{position:sticky;top:0;background:#0f170f;padding:10px 14px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;z-index:5}
+.topbar .title{font-size:20px;font-weight:900;margin-right:auto}.topbar .input{background:#0f1b0f;border:1px solid var(--border);border-radius:10px;padding:8px 10px;color:var(--text)}
+.list{padding:12px;display:grid;gap:12px}.order{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;display:grid;grid-template-columns: 1fr auto;gap:10px;align-items:center}
+.order.blink{animation:blink 1.4s ease-in-out infinite}@keyframes blink{0%,100%{opacity:1}50%{opacity:.45}}
+.tableBig{font-size:38px;font-weight:900;line-height:1;margin:0 0 4px}.meta{color:var(--muted);font-size:14px}.details{font-size:18px}
+.total{font-weight:900;font-size:26px; background:#263b18; border:1px solid #355525; padding:6px 10px; border-radius:12px; display:inline-block}
+.dot{width:14px;height:14px;border-radius:50%;display:inline-block;margin-right:8px;vertical-align:middle}.dot.red{background:var(--wait)}.dot.green{background:var(--ok)}
+.state{font-weight:800;display:inline-flex;align-items:center;gap:8px}.btn{padding:10px 14px;border-radius:12px;border:1px solid #315a2e;background:#1d301d;color:#c8f5bf;cursor:pointer;font-size:16px}
+.footer{position:sticky;bottom:0;background:#0f170f;border-top:1px solid var(--border);padding:10px 12px}.back{width:100%;padding:14px;border-radius:14px;border:1px solid #315a2e;background:#1d301d;color:#c8f5bf;font-size:18px}
+</style></head><body>
   <div class="topbar">
     <div class="title">📋 Ordini – evento ok25</div>
     <label>Giornata: <input type="date" id="dayInput" class="input"></label>
     <label><input type="checkbox" id="onlyOpen" checked> Solo aperti</label>
   </div>
-
   <div id="list" class="list"></div>
-
-  <div class="footer">
-    <a href="./index.html"><button class="back">⬅️ Indietro</button></a>
-  </div>
+  <div class="footer"><a href="./index.html"><button class="back">⬅️ Indietro</button></a></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
     import { getFirestore, collection, onSnapshot, updateDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
-
     const firebaseConfig = {
   "apiKey": "AIzaSyAZPR5tHdHgbfdhq77SERUBBsH3o3GlFro",
   "authDomain": "oktoberfest-ordes.firebaseapp.com",
@@ -58,67 +34,18 @@
   "messagingSenderId": "836780488125",
   "appId": "1:836780488125:web:a5d99be814b773c7f78ed4"
 };
-    const EVENT_CODE = "ok25";
-    const app = initializeApp(firebaseConfig);
-    const db  = getFirestore(app);
+    const EVENT_CODE="ok25"; const app=initializeApp(firebaseConfig); const db=getFirestore(app);
+    const $=s=>document.querySelector(s); const pad=n=>String(n).padStart(2,"0"); const ymd=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+    const hhmm=ts=>{try{const d=ts?.toDate?ts.toDate():new Date();return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}catch{return "-";}};
 
-    const $ = s => document.querySelector(s);
-    const pad = n => String(n).padStart(2,"0");
-    const ymd = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
-    const hhmm = ts => { try{ const d = ts?.toDate ? ts.toDate() : new Date(); return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }catch{ return "-"; } };
-
-    let CURRENT_DAY = localStorage.getItem("ok25_current_day") || ymd(new Date());
-    $("#dayInput").value = CURRENT_DAY;
-    $("#dayInput").addEventListener("change", e => { CURRENT_DAY = e.target.value; localStorage.setItem("ok25_current_day", CURRENT_DAY); render(_cache); });
-    $("#onlyOpen").addEventListener("change", ()=> render(_cache));
-
-    function badge(o){
-      if (o.status === "in_attesa") return `<span class="state"><span class="dot red"></span><span>In attesa</span></span>`;
-      if (o.status === "pronto")     return `<span class="state"><span class="dot green"></span><span>Pronto</span></span>`;
-      return ``;
-    }
-
-    function isBlink(o){ return o.status === "in_attesa" || o.status === "pronto"; }
-
-    function orderRow(o){
-      const items = (o.items||[]).map(i => i.qty + "× " + i.name).join(", ");
-      const time  = hhmm(o.createdAt);
-      const show  = (o.day || "") === CURRENT_DAY;
-      if (!show) return "";
-      const onlyOpen = $("#onlyOpen").checked;
-      if (onlyOpen && (o.status==="consegnato" || o.deleted)) return "";
-      const cls = isBlink(o) ? "order blink" : "order";
-      const stateHtml = badge(o);
-
-      return `
-        <div class="${cls}">
-          <div>
-            <div class="tableBig">Tavolo ${o.table||""}</div>
-            <div class="meta">${time} • ${o.waiter||""}</div>
-            <div class="details">${items}</div>
-          </div>
-          <div style="text-align:right">
-            <div class="details" style="font-weight:900">${Number(o.total||0).toFixed(2)}€</div>
-            <div style="margin-top:8px">${stateHtml}</div>
-            <div class="actions" style="margin-top:8px">
-              <button class="btn" onclick="window._advance('${o.id}','${o.status||"in_attesa"}')">Avanza</button>
-            </div>
-          </div>
-        </div>`;
-    }
-
-    let _cache = [];
-    function render(arr){
-      _cache = arr;
-      const html = arr.map(orderRow).join("") || "<div style='opacity:.7;padding:20px'>Nessun ordine per la giornata selezionata.</div>";
-      $("#list").innerHTML = html;
-    }
-
-    const qEv = query(collection(db,"orders"), where("eventCode","==",EVENT_CODE));
-    onSnapshot(qEv, snap => { const a = snap.docs.map(d=>({ id:d.id, ...d.data() })); a.sort((x,y)=> (y.createdAt?.seconds||0)-(x.createdAt?.seconds||0)); render(a); });
-
-    const STATI = ["in_attesa","pronto","consegnato","eliminato"];
-    window._advance = async (id, s) => { const next = STATI[(STATI.indexOf(s)+1)%STATI.length]; await updateDoc(doc(db,"orders",id), { status: next }); };
+    let CURRENT_DAY=localStorage.getItem("ok25_current_day")||ymd(new Date()); $("#dayInput").value=CURRENT_DAY;
+    $("#dayInput").addEventListener("change",e=>{CURRENT_DAY=e.target.value;localStorage.setItem("ok25_current_day",CURRENT_DAY);render(_cache);});
+    $("#onlyOpen").addEventListener("change",()=>render(_cache));
+    function badge(o){ if(o.status==="in_attesa") return '<span class="state"><span class="dot red"></span><span>In attesa</span></span>'; if(o.status==="pronto") return '<span class="state"><span class="dot green"></span><span>Pronto</span></span>'; return ''; }
+    function isBlink(o){ return o.status==="in_attesa"||o.status==="pronto"; }
+    function orderRow(o){ const items=(o.items||[]).map(i=>i.qty+"× "+i.name).join(", "); const time=hhmm(o.createdAt); const show=(o.day||"")===CURRENT_DAY; if(!show) return ""; const onlyOpen=$("#onlyOpen").checked; if(onlyOpen&&(o.status==="consegnato"||o.deleted)) return ""; const cls=isBlink(o)?"order blink":"order"; const st=badge(o); return `<div class="${cls}"><div><div class="tableBig">Tavolo ${o.table||""}</div><div class="meta">${time} • ${o.waiter||""}</div><div class="details">${items}</div></div><div style="text-align:right"><div class="details" style="font-weight:900">${Number(o.total||0).toFixed(2)}€</div><div style="margin-top:8px">${st}</div><div class="actions" style="margin-top:8px"><button class="btn" onclick="window._advance('${o.id}','${o.status||"in_attesa"}')">Avanza</button></div></div></div>`; }
+    let _cache=[]; function render(arr){ _cache=arr; const html=arr.map(orderRow).join("") || "<div style='opacity:.7;padding:20px'>Nessun ordine per la giornata selezionata.</div>"; $("#list").innerHTML=html; }
+    const qEv=query(collection(db,"orders"), where("eventCode","==","ok25")); onSnapshot(qEv, snap=>{ const a=snap.docs.map(d=>({id:d.id,...d.data()})); a.sort((x,y)=>(y.createdAt?.seconds||0)-(x.createdAt?.seconds||0)); render(a); });
+    const STATI=["in_attesa","pronto","consegnato","eliminato"]; window._advance=async(id,s)=>{const next=STATI[(STATI.indexOf(s)+1)%STATI.length]; await updateDoc(doc(db,"orders",id), {status:next});};
   </script>
-</body>
-</html>
+</body></html>
