@@ -16,6 +16,8 @@
   .topbar .input{background:#0f1b0f;border:1px solid var(--border);border-radius:10px;padding:8px 10px;color:var(--text)}
   .list{padding:12px;display:grid;gap:12px}
   .order{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;display:grid;grid-template-columns: 1fr auto;gap:10px;align-items:center}
+  .order.blink{animation: blink 1.4s ease-in-out infinite}
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.45} }
   .tableBig{font-size:38px;font-weight:900;line-height:1;margin:0 0 4px}
   .meta{color:var(--muted);font-size:14px}
   .details{font-size:18px}
@@ -24,8 +26,6 @@
   .dot.red{background:var(--wait)} .dot.green{background:var(--ok)}
   .state{font-weight:800;display:inline-flex;align-items:center;gap:8px}
   .state.pronto{color:#a5e8b0}
-  .blink{animation: blink 1.4s ease-in-out infinite}
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.45} }
   .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
   .btn{padding:10px 14px;border-radius:12px;border:1px solid #315a2e;background:#1d301d;color:#c8f5bf;cursor:pointer;font-size:16px}
   .btn:hover{filter:brightness(1.1)}
@@ -74,7 +74,7 @@
 
     function badge(o){
       if (o.status === "in_attesa") return `<span class="state"><span class="dot red"></span><span>In attesa</span></span>`;
-      if (o.status === "pronto")     return `<span class="state pronto"><span class="dot green"></span><span>Pronto</span></span>`;
+      if (o.status === "pronto")     return `<span class="state"><span class="dot green"></span><span>Pronto</span></span>`;
       return ``;
     }
 
@@ -87,18 +87,18 @@
       if (!show) return "";
       const onlyOpen = $("#onlyOpen").checked;
       if (onlyOpen && (o.status==="consegnato" || o.deleted)) return "";
-      const totalCls = isBlink(o) ? "total blink" : "total";
+      const cls = isBlink(o) ? "order blink" : "order";
       const stateHtml = badge(o);
 
       return `
-        <div class="order">
+        <div class="${cls}">
           <div>
             <div class="tableBig">Tavolo ${o.table||""}</div>
             <div class="meta">${time} • ${o.waiter||""}</div>
             <div class="details">${items}</div>
           </div>
           <div style="text-align:right">
-            <div class="${totalCls}">${Number(o.total||0).toFixed(2)}€</div>
+            <div class="details" style="font-weight:900">${Number(o.total||0).toFixed(2)}€</div>
             <div style="margin-top:8px">${stateHtml}</div>
             <div class="actions" style="margin-top:8px">
               <button class="btn" onclick="window._advance('${o.id}','${o.status||"in_attesa"}')">Avanza</button>
