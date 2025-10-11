@@ -323,7 +323,7 @@ th{font-size:16px}td{font-size:18px}.dot{width:12px;height:12px;border-radius:50
                "<div><b>"+Number(o.total||0).toFixed(2)+"€</b>"+(o.deleted?" <span style='color:#58734a'>(eliminato)</span>":"")+"</div>"+
              "</div>";
     }).join("");
-    $("totalsList").innerHTML = rows or "<div style='color:#58734a'>Nessun ordine trovato.</div>";
+    $("totalsList").innerHTML = rows || "<div style='color:#58734a'>Nessun ordine trovato.</div>";
   }
   function buildCsvRows(orders){
     function esc(s){ s = (s==null?"":String(s)); return '"'+s.replace(/"/g,'""')+'"'; }
