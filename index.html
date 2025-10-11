@@ -3,58 +3,91 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Oktober Orders – ok25 (Form ordini)</title>
+<title>Oktober Orders – ok25</title>
 <style>
   :root{
     --bg:#f7fbe9; --card:#ffffff; --text:#1b2b16; --muted:#58734a;
-    --primary:#2e7d32; --primary-2:#66bb6a; --border:#d9e8c6;
+    --primary:#2e7d32; --primary-2:#66bb6a; --accent:#f4d03f;
+    --danger:#b71c1c; --border:#d9e8c6;
     --fs-base:18px; --fs-h2:22px; --fs-btn:18px;
   }
   *{box-sizing:border-box} html,body{max-width:100%;overflow-x:hidden}
   body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:var(--fs-base)}
-  .container{max-width:900px;margin:0 auto;padding:16px}
-  header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
+  .container{max-width:1100px;margin:0 auto;padding:16px}
+  header.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
   .btn{padding:12px 16px;border-radius:14px;border:1px solid var(--primary-2);background:linear-gradient(180deg,var(--primary-2),var(--primary));color:#fff;cursor:pointer;font-size:var(--fs-btn)}
-  .btn.ghost{background:#fff;color:var(--primary);border:1px solid var(--primary)}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px}
+  .btn.ghost{background:#fff;color:#2e7d32;border:1px solid #2e7d32}
+  .grid{display:grid;grid-template-columns:1fr;gap:16px}
+  @media(min-width:900px){.grid{grid-template-columns:1fr 1fr}}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 6px 18px rgba(27,43,22,.06)}
   .row{display:flex;gap:12px;align-items:center}
   .input{width:100%;padding:14px 16px;border-radius:14px;border:1px solid var(--border);background:#fbfff4;color:var(--text)}
   .qtybox{display:flex;align-items:center;gap:10px;justify-content:flex-end}
   .qtynum{min-width:32px;text-align:center;font-weight:800;font-size:20px}
   .row.item{justify-content:space-between;padding:10px 0;border-bottom:1px dashed var(--border)}
-  .label .price{color:var(--muted);font-size:14px;margin-left:8px}
+  .label .price{color:#58734a;font-size:14px;margin-left:8px}
   .total{font-weight:900;font-size:22px;background:#fff5cc;border:1px solid #f5e487;border-radius:999px;padding:10px 14px}
   .group{margin-top:8px}
   .group-title{font-weight:900;background:#fff8d6;border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:8px 0;}
+  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+  table{width:100%;border-collapse:collapse;table-layout:fixed;word-wrap:break-word}
+  th,td{padding:12px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+  th{font-size:16px} td{font-size:18px}
+  .dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:8px;vertical-align:middle}
+  .red{background:#ff5252} .green{background:#00c853}
+  .blink{animation: blink 1.4s ease-in-out infinite}
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.45} }
+  @media(max-width: 720px){
+    table thead{display:none}
+    table, tbody, tr, td{display:block;width:100%}
+    tr{border:1px solid var(--border);border-radius:12px;padding:8px;margin:10px 0;background:#fff}
+    td{border-bottom:none;padding:8px 8px}
+    td::before{content: attr(data-label) ": ";font-weight:700;margin-right:6px;color:#2a3b1f}
+    td.actions{display:flex;gap:8px}
+  }
 </style>
 </head>
 <body>
   <div class="container">
-    <header>
+    <header class="top">
       <h1 style="margin:0">Oktober Orders <span style="display:inline-block;padding:6px 12px;border:1px solid var(--border);background:#fff8d6;border-radius:999px">evento: ok25</span></h1>
       <a href="./orders.html" class="btn ghost">📋 Ordini</a>
     </header>
 
-    <div class="card">
-      <h2>Nuovo ordine</h2>
-      <div class="row">
-        <input id="waiterInput" class="input" placeholder="Nome cameriere" />
-        <input id="tableInput" class="input" placeholder="Tavolo" inputmode="numeric" />
+    <div class="grid">
+      <div class="card">
+        <h2>Nuovo ordine</h2>
+        <div class="row">
+          <input id="waiterInput" class="input" placeholder="Nome cameriere" />
+          <input id="tableInput" class="input" placeholder="Tavolo" inputmode="numeric" />
+        </div>
+
+        <div id="menuList" style="margin-top:8px"></div>
+
+        <div class="row" style="justify-content:space-between;margin-top:12px">
+          <div id="totalBox" class="total">Totale: 0,00€</div>
+          <button id="addOrderBtn" type="button" class="btn">➕ Aggiungi ordine</button>
+        </div>
       </div>
 
-      <div id="menuList" style="margin-top:8px"></div>
-
-      <div class="row" style="justify-content:space-between;margin-top:12px">
-        <div id="totalBox" class="total">Totale: 0,00€</div>
-        <button id="addOrderBtn" type="button" class="btn">➕ Aggiungi ordine</button>
+      <div class="card">
+        <h2>Ordini</h2>
+        <div class="toolbar">
+          <label for="dayInput">Giornata:</label>
+          <input type="date" id="dayInput" class="input" style="max-width:220px" />
+          <span style="color:#58734a">Mostro solo gli ordini <b>non eliminati</b> della giornata scelta</span>
+        </div>
+        <div id="ordersLive"></div>
       </div>
-      <p style="color:#58734a;margin-top:10px">Se non vedi la lista bibite, ricarica con <b>Ctrl+F5</b> / <b>Cmd+Shift+R</b>.</p>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import {
+      getFirestore, collection, addDoc, onSnapshot, serverTimestamp,
+      updateDoc, doc, writeBatch, getDocs, query, where
+    } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
     const firebaseConfig = {
   "apiKey": "AIzaSyAZPR5tHdHgbfdhq77SERUBBsH3o3GlFro",
@@ -119,6 +152,19 @@
     ];
 
     const $ = id => document.getElementById(id);
+    const pad = n => String(n).padStart(2,"0");
+    const ymd = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+    function hhmm(ts){ try{ const d = ts?.toDate ? ts.toDate() : new Date(); return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }catch{ return "-"; } }
+
+    let CURRENT_DAY = localStorage.getItem("ok25_current_day") || ymd(new Date());
+    function applyDayToUI(){ const input = $("dayInput"); if (input) input.value = CURRENT_DAY; }
+    function setDay(newDay){ CURRENT_DAY = newDay; localStorage.setItem("ok25_current_day", CURRENT_DAY); renderOrdini(_snapshotCache || []); }
+    applyDayToUI();
+    $("dayInput").addEventListener("change", e=> setDay(e.target.value));
+
+    const WAITER_KEY = "ok25_waiter_name";
+    function restoreWaiter(){ const s = localStorage.getItem(WAITER_KEY); if (s && $("waiterInput")) $("waiterInput").value = s; }
+    function persistWaiter(){ localStorage.setItem(WAITER_KEY, ($("waiterInput")?.value||"").trim()); }
 
     function renderMenu(){
       const wrap = $("menuList");
@@ -138,61 +184,79 @@
 
       wrap.querySelectorAll("button[data-key]").forEach(btn=>{
         btn.addEventListener("click", ()=>{
-          const key=btn.getAttribute("data-key");
-          const d=Number(btn.getAttribute("data-delta"));
-          state[key]=Math.max(0,(state[key]||0)+d);
-          const el=document.getElementById("qty-"+key); if(el) el.textContent=state[key];
+          const key = btn.getAttribute("data-key");
+          const delta = Number(btn.getAttribute("data-delta"));
+          state[key] = Math.max(0, (state[key]||0) + delta);
+          const el = document.getElementById("qty-"+key); if(el) el.textContent = state[key];
           calcTotal();
         });
       });
     }
 
-    function calcTotal(){
-      const tot = KEYS.reduce((s,k)=> s+(state[k]||0)*PRICE[k], 0);
-      $("totalBox").textContent = "Totale: " + tot.toFixed(2) + "€";
-      return tot;
-    }
+    function calcTotal(){ const tot = KEYS.reduce((s,k)=> s+(state[k]||0)*PRICE[k],0); $("totalBox").textContent = "Totale: " + tot.toFixed(2) + "€"; return tot; }
 
-    function buildOrder(){
-      const waiter = $("waiterInput")?.value?.trim();
-      const table  = $("tableInput")?.value?.trim();
-      const items  = KEYS.map(k => ({ key:k, name:NAMES[k], qty: state[k]||0, price: PRICE[k] }))
-                         .filter(i => i.qty>0);
-      const total  = calcTotal();
-      return { waiter, table, items, total };
-    }
+    function buildOrder(){ const waiter=$("waiterInput")?.value?.trim(); const table=$("tableInput")?.value?.trim(); const items=KEYS.map(k=>({key:k,name:NAMES[k],qty:state[k]||0,price:PRICE[k]})).filter(i=>i.qty>0); const total=calcTotal(); return {waiter,table,items,total}; }
 
     async function salvaOrdine(){
-      const tableEl = $("tableInput");
+      const tableEl=$("tableInput");
       const { waiter, table, items, total } = buildOrder();
       if (!waiter || !table) { alert("Inserisci nome cameriere e tavolo"); return; }
       if (!items.length) { alert("Aggiungi almeno una quantità"); return; }
-
-      await addDoc(collection(db,"orders"), {
-        waiter, table, items, total,
-        status: "in_attesa",
-        eventCode: EVENT_CODE,
-        deleted: false,
-        day: new Date().toISOString().slice(0,10),
-        createdAt: serverTimestamp()
-      });
-
-      // reset quantità
-      KEYS.forEach(k => { state[k]=0; const el=$("qty-"+k); if(el) el.textContent="0"; });
-      calcTotal();
-
-      // persisti cameriere, pulisci tavolo
-      localStorage.setItem("ok25_waiter_name", waiter);
-      if (tableEl) { tableEl.value=""; tableEl.focus(); }
-
+      await addDoc(collection(db,"orders"), { waiter, table, items, total, status:"in_attesa", eventCode:EVENT_CODE, deleted:false, day:CURRENT_DAY, createdAt: serverTimestamp() });
+      // reset
+      Object.keys(state).forEach(k=>{ state[k]=0; const el=$("qty-"+k); if(el) el.textContent="0"; });
+      calcTotal(); persistWaiter(); if (tableEl) { tableEl.value=""; tableEl.focus(); }
       alert("Ordine inserito ✅");
     }
 
+    const STATI=["in_attesa","pronto","consegnato","eliminato"];
+    async function avanzaStato(id, s){ const next=STATI[(STATI.indexOf(s)+1)%STATI.length]; await updateDoc(doc(db,"orders",id), { status: next }); }
+    async function eliminaOrdine(id){ if(!confirm("Archiviare questo ordine?")) return; await updateDoc(doc(db,"orders",id), { deleted:true, status:"eliminato" }); }
+
+    function dot(o){
+      if (o.status==="in_attesa") return '<span class="dot red"></span>';
+      if (o.status==="pronto") return '<span class="dot green"></span>';
+      return '';
+    }
+    function rowBlinkCls(o){
+      return (o.status==="in_attesa" || o.status==="pronto") ? "blink" : "";
+    }
+
+    let _snapshotCache=[];
+    function renderOrdini(arr){
+      _snapshotCache = arr;
+      const wrap = document.getElementById("ordersLive");
+      const vis = arr.filter(o => !o.deleted && (o.day||"")===(CURRENT_DAY));
+      wrap.innerHTML = `
+        <table>
+          <thead><tr><th>Ora</th><th>Tavolo</th><th>Cameriere</th><th>Dettagli</th><th>Totale</th><th>Stato</th><th>Azioni</th></tr></thead>
+          <tbody>
+            ${vis.map(o => `
+              <tr class="${rowBlinkCls(o)}">
+                <td data-label="Ora">${hhmm(o.createdAt)}</td>
+                <td data-label="Tavolo" style="font-weight:900;font-size:20px">${o.table||""}</td>
+                <td data-label="Cameriere">${o.waiter||""}</td>
+                <td data-label="Dettagli">${dot(o)} ${(o.items||[]).map(i => i.qty+"× "+i.name).join("<br>")}</td>
+                <td data-label="Totale"><b>${Number(o.total||0).toFixed(2)}€</b></td>
+                <td data-label="Stato">${o.status||""}</td>
+                <td class="actions" data-label="Azioni">
+                  <button class="btn ghost" onclick="window._advance('${o.id}','${o.status||"in_attesa"}')">Avanza</button>
+                  <button class="btn" style="background:linear-gradient(180deg,#ef9a9a,#e53935);border-color:#e57373" onclick="window._remove('${o.id}')">Elimina</button>
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    const qEv = query(collection(db,"orders"), where("eventCode","==",EVENT_CODE));
+    onSnapshot(qEv, snap => { const a=snap.docs.map(d=>({id:d.id,...d.data()})); a.sort((x,y)=>(y.createdAt?.seconds||0)-(x.createdAt?.seconds||0)); renderOrdini(a); });
+
     // init
-    renderMenu();
-    calcTotal();
-    const saved = localStorage.getItem("ok25_waiter_name"); if (saved) $("waiterInput").value = saved;
+    renderMenu(); calcTotal(); restoreWaiter();
     document.getElementById("addOrderBtn").addEventListener("click", salvaOrdine);
+    window._advance=avanzaStato; window._remove=eliminaOrdine;
   </script>
 </body>
 </html>
