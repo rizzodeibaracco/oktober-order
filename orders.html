@@ -1,7 +1,7 @@
 
 <!doctype html><html lang="it"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ordini – ok25 (FULL compat)</title>
+<title>Ordini – ok25 (banco, avanzamento fisso)</title>
 <style>
 :root{--bg:#10170f;--card:#162216;--text:#eaf6e5;--muted:#9fc19a;--border:#274427;--ok:#00c853;--wait:#ff5252}
 *{box-sizing:border-box}html,body{max-width:100%;overflow-x:hidden}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
@@ -13,6 +13,7 @@
 .total{font-weight:900;font-size:26px; background:#263b18; border:1px solid #355525; padding:6px 10px; border-radius:12px; display:inline-block}
 .dot{width:14px;height:14px;border-radius:50%;display:inline-block;margin-right:8px;vertical-align:middle}.dot.red{background:var(--wait)}.dot.green{background:var(--ok)}
 .state{font-weight:800;display:inline-flex;align-items:center;gap:8px}.btn{padding:10px 14px;border-radius:12px;border:1px solid #315a2e;background:#1d301d;color:#c8f5bf;cursor:pointer;font-size:16px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
 .footer{position:sticky;bottom:0;background:#0f170f;border-top:1px solid var(--border);padding:10px 12px}.back{width:100%;padding:14px;border-radius:14px;border:1px solid #315a2e;background:#1d301d;color:#c8f5bf;font-size:18px}
 </style></head><body>
   <div class="topbar">
@@ -54,6 +55,12 @@
     }
     function isBlink(o){ return o.status === "in_attesa" || o.status === "pronto"; }
 
+    function nextStatus(s){
+      if(s==="in_attesa") return "pronto";
+      if(s==="pronto") return "consegnato";
+      return "consegnato"; // resta consegnato
+    }
+
     function orderRow(o){
       const items = (o.items||[]).map(i => i.qty + "× " + i.name).join(", ");
       const time  = fmtHHMM(o.createdAt);
@@ -63,6 +70,10 @@
       if (onlyOpen && (o.status==="consegnato" || o.deleted)) return "";
       const cls = isBlink(o) ? "order blink" : "order";
       const stateHtml = badge(o);
+      const canAdvance = !o.deleted && o.status !== "consegnato";
+      const btnHtml = canAdvance
+        ? `<button class="btn" onclick="window._advance('${o.id}','${o.status||"in_attesa"}')">Avanza</button>`
+        : `<button class="btn" disabled>✓</button>`;
 
       return `<div class="${cls}">
         <div>
@@ -73,24 +84,24 @@
         <div style="text-align:right">
           <div class="details" style="font-weight:900">${Number(o.total||0).toFixed(2)}€</div>
           <div style="margin-top:8px">${stateHtml}</div>
-          <div class="actions" style="margin-top:8px">
-            <button class="btn" onclick="window._advance('${o.id}','${o.status||"in_attesa"}')">Avanza</button>
-          </div>
+          <div class="actions" style="margin-top:8px">${btnHtml}</div>
         </div>
       </div>`;
     }
 
     let _cache = [];
     function render(arr){
-      _cache = arr;
-      const html = arr.map(orderRow).join("") || "<div style='opacity:.7;padding:20px'>Nessun ordine per la giornata selezionata.</div>";
+      _cache = arr.slice().sort((x,y)=>(y.createdAt?.seconds||0)-(x.createdAt?.seconds||0));
+      const html = _cache.map(orderRow).join("") || "<div style='opacity:.7;padding:20px'>Nessun ordine per la giornata selezionata.</div>";
       $("#list").innerHTML = html;
     }
 
     const qEv = query(collection(db,"orders"), where("eventCode","==","ok25"));
-    onSnapshot(qEv, snap => { const a = snap.docs.map(d=>({ id:d.id, ...d.data() })); a.sort((x,y)=>(y.createdAt?.seconds||0)-(x.createdAt?.seconds||0)); render(a); });
+    onSnapshot(qEv, snap => { const a = snap.docs.map(d=>({ id:d.id, ...d.data() })); render(a); });
 
-    const STATI=["in_attesa","pronto","consegnato","eliminato"];
-    window._advance = async (id, s) => { const next = STATI[(STATI.indexOf(s)+1)%STATI.length]; await updateDoc(doc(db,"orders",id), { status: next }); };
+    window._advance = async (id, s) => {
+      const ns = nextStatus(s || "in_attesa");
+      await updateDoc(doc(db,"orders",id), { status: ns });
+    };
   </script>
 </body></html>
