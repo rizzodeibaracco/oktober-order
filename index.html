@@ -1,7 +1,6 @@
-
 <!doctype html><html lang="it"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Oktober Orders – ok25 (FULL compat)</title>
+<title>Oktober Orders – ok25 (HOME fixed advance)</title>
 <style>
 :root{--bg:#f7fbe9;--card:#fff;--text:#1b2b16;--muted:#58734a;--primary:#2e7d32;--primary-2:#66bb6a;--border:#d9e8c6}
 *{box-sizing:border-box}html,body{max-width:100%;overflow-x:hidden}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:18px}
@@ -11,6 +10,7 @@
 .btn.alt{border-color:#f6d365;background:linear-gradient(180deg,#ffe082,#f4b400);color:#1b2b16}
 .btn.warn{border-color:#ffb74d;background:linear-gradient(180deg,#ffd54f,#fb8c00);color:#1b2b16}
 .btn.danger{border-color:#e57373;background:linear-gradient(180deg,#ef9a9a,#e53935)}
+.btn[disabled]{opacity:.55;cursor:not-allowed}
 .grid{display:grid;grid-template-columns:1fr;gap:16px}@media(min-width:900px){.grid{grid-template-columns:1fr 1fr}}
 .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 6px 18px rgba(27,43,22,.06)}
 .row{display:flex;gap:12px;align-items:center}.input{width:100%;padding:14px 16px;border-radius:14px;border:1px solid var(--border);background:#fbfff4;color:var(--text)}
@@ -102,7 +102,6 @@ th{font-size:16px}td{font-size:18px}.dot{width:12px;height:12px;border-radius:50
   "messagingSenderId": "836780488125",
   "appId": "1:836780488125:web:a5d99be814b773c7f78ed4"
 };
-  // ----- Helpers compat -----
   function hasToDate(x){ return x && typeof x.toDate === "function"; }
   function tsToDate(ts){ return hasToDate(ts) ? ts.toDate() : new Date(); }
   function fmtHHMM(ts){ var d=tsToDate(ts); return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }
@@ -114,161 +113,98 @@ th{font-size:16px}td{font-size:18px}.dot{width:12px;height:12px;border-radius:50
   const app = initializeApp(firebaseConfig);
   const db  = getFirestore(app);
 
-  // ---- Listino ----
-  const PRICE = {
-    mass_bionda1: 11, mass_rossa1: 13, mass_nf1: 13,
-    bionda05: 6, rossa05: 7, nf05: 7,
-    birra_gf: 5, birra_analc05: 4,
-    coca: 3, coca_zero: 3, fanta: 3, te_limone: 3, te_pesca: 3,
-    acqua_nat: 1.5, acqua_frizz: 1.5,
-    torta_sacher: 4, crostata_veg: 4
-  };
-  const NAMES = {
-    mass_bionda1: "MASS Wieninger bionda 1 L",
-    mass_rossa1: "MASS Wieninger rossa 1 L",
-    mass_nf1: "MASS Wieninger non filtrata 1 L",
-    bionda05: "Wieninger bionda 0,5 L",
-    rossa05: "Wieninger rossa 0,5 L",
-    nf05: "Wieninger non filtrata 0,5 L",
-    birra_gf: "Birra gluten free",
-    birra_analc05: "Birra analcolica 0,5 L",
-    coca: "Coca-Cola", coca_zero: "Coca-Cola Zero", fanta: "Fanta",
-    te_limone: "Tè al limone", te_pesca: "Tè alla pesca",
-    acqua_nat: "Acqua naturale", acqua_frizz: "Acqua frizzante",
-    torta_sacher: "Torta Sacher", crostata_veg: "Crostata veg di marmellata"
-  };
-  const NAMES_HTML = {
-    mass_bionda1: "<b>🍺 MASS Wieninger bionda 1 L</b>",
-    mass_rossa1: "<b>🍺 MASS Wieninger rossa 1 L</b>",
-    mass_nf1: "<b>🍺 MASS Wieninger non filtrata 1 L</b>",
-    bionda05: "<b>Wieninger bionda 0,5 L</b>",
-    rossa05: "<b>Wieninger rossa 0,5 L</b>",
-    nf05: "<b>Wieninger non filtrata 0,5 L</b>",
-    birra_gf: "<b>Birra gluten free</b>",
-    birra_analc05: "<b>Birra analcolica 0,5 L</b>",
-    coca: "<b>🥤 Coca-Cola</b>", coca_zero: "<b>🥤 Coca-Cola Zero</b>", fanta: "<b>🥤 Fanta</b>",
-    te_limone: "<b>🥤 Tè al limone</b>", te_pesca: "<b>🥤 Tè alla pesca</b>",
-    acqua_nat: "<b>💧 Acqua naturale</b>", acqua_frizz: "<b>💧 Acqua frizzante</b>",
-    torta_sacher: "<b>🍰 Torta Sacher</b>", crostata_veg: "<b>🍰 Crostata veg di marmellata</b>"
-  };
-  const GROUPS = [
-    { title: "🍺 MASS 1 L", keys: ["mass_bionda1","mass_rossa1","mass_nf1"] },
-    { title: "🍺 0,5 L", keys: ["bionda05","rossa05","nf05"] },
-    { title: "🥤 Bibite 3€", keys: ["coca","coca_zero","fanta","te_limone","te_pesca"] },
-    { title: "💧 Acque 1,50€", keys: ["acqua_nat","acqua_frizz"] },
-    { title: "🍰 Dolci 4€", keys: ["torta_sacher","crostata_veg"] }
-  ];
-  var KEYS = Object.keys(PRICE);
+  const PRICE = { mass_bionda1:11, mass_rossa1:13, mass_nf1:13, bionda05:6, rossa05:7, nf05:7, birra_gf:5, birra_analc05:4, coca:3, coca_zero:3, fanta:3, te_limone:3, te_pesca:3, acqua_nat:1.5, acqua_frizz:1.5, torta_sacher:4, crostata_veg:4 };
+  const NAMES = { mass_bionda1:"MASS Wieninger bionda 1 L", mass_rossa1:"MASS Wieninger rossa 1 L", mass_nf1:"MASS Wieninger non filtrata 1 L", bionda05:"Wieninger bionda 0,5 L", rossa05:"Wieninger rossa 0,5 L", nf05:"Wieninger non filtrata 0,5 L", birra_gf:"Birra gluten free", birra_analc05:"Birra analcolica 0,5 L", coca:"Coca-Cola", coca_zero:"Coca-Cola Zero", fanta:"Fanta", te_limone:"Tè al limone", te_pesca:"Tè alla pesca", acqua_nat:"Acqua naturale", acqua_frizz:"Acqua frizzante", torta_sacher:"Torta Sacher", crostata_veg:"Crostata veg di marmellata" };
+  const NAMES_HTML = { mass_bionda1:"<b>🍺 MASS Wieninger bionda 1 L</b>", mass_rossa1:"<b>🍺 MASS Wieninger rossa 1 L</b>", mass_nf1:"<b>🍺 MASS Wieninger non filtrata 1 L</b>", bionda05:"<b>Wieninger bionda 0,5 L</b>", rossa05:"<b>Wieninger rossa 0,5 L</b>", nf05:"<b>Wieninger non filtrata 0,5 L</b>", birra_gf:"<b>Birra gluten free</b>", birra_analc05:"<b>Birra analcolica 0,5 L</b>", coca:"<b>🥤 Coca-Cola</b>", coca_zero:"<b>🥤 Coca-Cola Zero</b>", fanta:"<b>🥤 Fanta</b>", te_limone:"<b>🥤 Tè al limone</b>", te_pesca:"<b>🥤 Tè alla pesca</b>", acqua_nat:"<b>💧 Acqua naturale</b>", acqua_frizz:"<b>💧 Acqua frizzante</b>", torta_sacher:"<b>🍰 Torta Sacher</b>", crostata_veg:"<b>🍰 Crostata veg di marmellata</b>" };
+  const KEYS = Object.keys(PRICE);
   var state = {}; KEYS.forEach(function(k){ state[k]=0; });
+  const GROUPS = [
+    { title:"🍺 MASS 1 L", keys:["mass_bionda1","mass_rossa1","mass_nf1"] },
+    { title:"🍺 0,5 L", keys:["bionda05","rossa05","nf05"] },
+    { title:"🥤 Bibite 3€", keys:["coca","coca_zero","fanta","te_limone","te_pesca"] },
+    { title:"💧 Acque 1,50€", keys:["acqua_nat","acqua_frizz"] },
+    { title:"🍰 Dolci 4€", keys:["torta_sacher","crostata_veg"] }
+  ];
 
-  // ---- UI refs ----
   function $(id){ return document.getElementById(id); }
-  function setText(id, txt){ var el=$(id); if(el) el.textContent=txt; }
+  function setText(id,txt){ var el=$(id); if(el) el.textContent=txt; }
 
-  // ---- Giorno corrente ----
   function currentDay(){ return ymd(new Date()); }
-  var CURRENT_DAY = (function(){ try{ return localStorage.getItem("ok25_current_day") || currentDay(); }catch(e){ return currentDay(); } })();
-  function persistDay(){ try{ localStorage.setItem("ok25_current_day", CURRENT_DAY);}catch(e){} }
+  var CURRENT_DAY = (localStorage.getItem("ok25_current_day") || currentDay());
+  function saveDay(){ localStorage.setItem("ok25_current_day", CURRENT_DAY); }
   function applyDay(){ var el=$("dayInput"); if(el) el.value = CURRENT_DAY; }
-  function setDay(d){ CURRENT_DAY = d; persistDay(); renderOrdini(window.__SNAP_CACHE || []); }
-  applyDay();
-  $("dayInput").addEventListener("change", function(e){ setDay(e.target.value); });
+  function setDay(d){ CURRENT_DAY=d; saveDay(); renderOrdini(window.__SNAP_CACHE||[]); }
+  applyDay(); $("dayInput").addEventListener("change", function(e){ setDay(e.target.value); });
 
-  // ---- Cameriere persist ----
-  var WAITER_KEY = "ok25_waiter_name";
-  function restoreWaiter(){ try{ var s=localStorage.getItem(WAITER_KEY); if(s) $("waiterInput").value=s; }catch(e){} }
-  function saveWaiter(){ try{ localStorage.setItem(WAITER_KEY, ($("waiterInput").value||"").trim()); }catch(e){} }
+  var WAITER_KEY="ok25_waiter_name";
+  function restoreWaiter(){ var s=localStorage.getItem(WAITER_KEY); if(s) $("waiterInput").value=s; }
+  function saveWaiter(){ localStorage.setItem(WAITER_KEY, ($("waiterInput").value||"").trim()); }
 
-  // ---- Render menu ----
   function renderMenu(){
-    var wrap = $("menuList"); var html = "";
-    GROUPS.forEach(function(g){
-      html += '<div class="group"><div class="group-title">'+g.title+'</div>';
-      g.keys.forEach(function(k){
-        html += '<div class="row item">'+
-                  '<div class="label">'+NAMES_HTML[k]+' <span class="price">('+PRICE[k]+'€)</span></div>'+
-                  '<div class="qtybox">'+
-                    '<button class="btn ghost" data-key="'+k+'" data-d="-1">–</button>'+
-                    '<span class="qtynum" id="qty-'+k+'">0</span>'+
-                    '<button class="btn" data-key="'+k+'" data-d="1">+</button>'+
-                  '</div>'+
-                '</div>';
-      });
-      html += '</div>';
-    });
-    wrap.innerHTML = html;
-    var btns = wrap.querySelectorAll("button[data-key]");
-    for (var i=0;i<btns.length;i++){
+    var wrap=$("menuList"); var html="";
+    for(var gi=0; gi<GROUPS.length; gi++){
+      var g=GROUPS[gi];
+      html+='<div class="group"><div class="group-title">'+g.title+'</div>';
+      for(var j=0; j<g.keys.length; j++){
+        var k=g.keys[j];
+        html+='<div class="row item">'+
+              '<div class="label">'+NAMES_HTML[k]+' <span class="price">('+PRICE[k]+'€)</span></div>'+
+              '<div class="qtybox">'+
+                '<button class="btn ghost" data-key="'+k+'" data-d="-1">–</button>'+
+                '<span class="qtynum" id="qty-'+k+'">0</span>'+
+                '<button class="btn" data-key="'+k+'" data-d="1">+</button>'+
+              '</div></div>';
+      }
+      html+='</div>';
+    }
+    wrap.innerHTML=html;
+    var btns=wrap.querySelectorAll("button[data-key]");
+    for(var i=0;i<btns.length;i++){
       btns[i].addEventListener("click", function(){
-        var key = this.getAttribute("data-key");
-        var delta = parseInt(this.getAttribute("data-d") || this.getAttribute("data-delta") || "1",10);
-        if(isNaN(delta)) delta = 1;
-        state[key] = Math.max(0, (state[key]||0) + delta);
-        setText("qty-"+key, String(state[key]));
-        calcTotal();
+        var key=this.getAttribute("data-key"); var d=parseInt(this.getAttribute("data-d"),10);
+        state[key]=Math.max(0,(state[key]||0)+d); setText("qty-"+key, String(state[key])); calcTotal();
       });
     }
   }
-
-  function calcTotal(){
-    var tot=0; KEYS.forEach(function(k){ tot += (state[k]||0)*PRICE[k]; });
-    $("totalBox").textContent = "Totale: " + tot.toFixed(2) + "€";
-    return tot;
-  }
+  function calcTotal(){ var tot=0; for(var i=0;i<KEYS.length;i++){ var k=KEYS[i]; tot += (state[k]||0)*PRICE[k]; } $("totalBox").textContent="Totale: "+tot.toFixed(2)+"€"; return tot; }
 
   function buildOrder(){
-    var waiter = ($("waiterInput").value||"").trim();
-    var table  = ($("tableInput").value||"").trim();
-    var items = []; var total=0;
-    KEYS.forEach(function(k){
-      var q = state[k]||0;
-      if(q>0){ items.push({key:k,name:NAMES[k],qty:q,price:PRICE[k]}); total += q*PRICE[k]; }
-    });
+    var waiter=($("waiterInput").value||"").trim();
+    var table =($("tableInput").value||"").trim();
+    var items=[]; var total=0;
+    for(var i=0;i<KEYS.length;i++){ var k=KEYS[i]; var q=state[k]||0; if(q>0){ items.push({key:k,name:NAMES[k],qty:q,price:PRICE[k]}); total+=q*PRICE[k]; } }
     return {waiter:waiter, table:table, items:items, total:total};
   }
-
   async function salvaOrdine(){
-    var tableEl = $("tableInput");
-    var o = buildOrder();
-    if(!o.waiter || !o.table){ alert("Inserisci nome cameriere e tavolo"); return; }
+    var elT=$("tableInput");
+    var o=buildOrder();
+    if(!o.waiter||!o.table){ alert("Inserisci nome cameriere e tavolo"); return; }
     if(!o.items.length){ alert("Aggiungi almeno una quantità"); return; }
-    // write
-    try{
-      await addDoc(collection(db,"orders"), { waiter:o.waiter, table:o.table, items:o.items, total:o.total, status:"in_attesa", eventCode:EVENT_CODE, deleted:false, day:CURRENT_DAY, createdAt: serverTimestamp() });
-    }catch(e){
-      alert("Errore salvataggio ordine: "+e.message); return;
-    }
-    // reset quantità + tieni nome cameriere, svuota tavolo
-    KEYS.forEach(function(k){ state[k]=0; setText("qty-"+k,"0"); });
-    calcTotal(); saveWaiter(); if(tableEl){ tableEl.value=""; tableEl.focus(); }
+    await addDoc(collection(db,"orders"), { waiter:o.waiter, table:o.table, items:o.items, total:o.total, status:"in_attesa", eventCode:EVENT_CODE, deleted:false, day:CURRENT_DAY, createdAt: serverTimestamp() });
+    for(var i=0;i<KEYS.length;i++){ var k=KEYS[i]; state[k]=0; setText("qty-"+k,"0"); } calcTotal();
+    saveWaiter(); if(elT){ elT.value=""; elT.focus(); }
     alert("Ordine inserito ✅");
   }
 
-  var STATI = ["in_attesa","pronto","consegnato","eliminato"];
-  async function avanzaStato(id, s){
-    var idx = STATI.indexOf(s); if(idx<0) idx=0;
-    var next = STATI[(idx+1)%STATI.length];
-    await updateDoc(doc(db,"orders",id), { status: next });
-  }
-  async function eliminaOrdine(id){
-    if(!confirm("Eliminare questo ordine (archiviazione)?")) return;
-    await updateDoc(doc(db,"orders",id), { deleted:true, status:"eliminato" });
-  }
+  // Avanzamento fermo a "consegnato"
+  function nextStatus(s){ if(s==="in_attesa") return "pronto"; if(s==="pronto") return "consegnato"; return "consegnato"; }
+  async function avanzaStato(id, s){ var ns = nextStatus(s||"in_attesa"); await updateDoc(doc(db,"orders",id), { status: ns }); }
+  async function eliminaOrdine(id){ if(!confirm("Eliminare questo ordine (archiviazione)?")) return; await updateDoc(doc(db,"orders",id), { deleted:true, status:"eliminato" }); }
 
   function dot(o){ if(o.status==="in_attesa") return '<span class="dot red"></span>'; if(o.status==="pronto") return '<span class="dot green"></span>'; return ''; }
   function rowBlinkCls(o){ return (o.status==="in_attesa" || o.status==="pronto") ? "blink" : ""; }
 
-  // ---- Live ordini ----
+  let _snapshotCache = [];
   function renderOrdini(arr){
-    window.__SNAP_CACHE = arr.slice();
+    _snapshotCache = arr.slice();
     var vis = arr.filter(function(o){ return !o.deleted && (o.day||"")===CURRENT_DAY; });
-    vis.sort(function(a,b){
-      var ax = (a.createdAt && a.createdAt.seconds) ? a.createdAt.seconds : 0;
-      var bx = (b.createdAt && b.createdAt.seconds) ? b.createdAt.seconds : 0;
-      return bx-ax;
-    });
+    vis.sort(function(a,b){ var ax=(a.createdAt&&a.createdAt.seconds)||0; var bx=(b.createdAt&&b.createdAt.seconds)||0; return bx-ax; });
     var rows = vis.map(function(o){
-      var items = (o.items||[]).map(function(i){ return i.qty+"× "+i.name; }).join("<br>");
+      var items=(o.items||[]).map(function(i){ return i.qty+"× "+i.name; }).join("<br>");
+      var canAdvance = !o.deleted && o.status!=="consegnato";
+      var btn = canAdvance
+        ? '<button class="btn ghost" onclick="window._advance(\''+o.id+'\',\''+(o.status||'in_attesa')+'\')">Avanza</button>'
+        : '<button class="btn" disabled>✓</button>';
       return '<tr class="'+rowBlinkCls(o)+'">'+
                '<td data-label="Ora">'+fmtHHMM(o.createdAt)+'</td>'+
                '<td data-label="Tavolo" style="font-weight:900;font-size:20px">'+(o.table||"")+'</td>'+
@@ -276,136 +212,37 @@ th{font-size:16px}td{font-size:18px}.dot{width:12px;height:12px;border-radius:50
                '<td data-label="Dettagli">'+dot(o)+' '+items+'</td>'+
                '<td data-label="Totale"><b>'+Number(o.total||0).toFixed(2)+'€</b></td>'+
                '<td data-label="Stato">'+(o.status||"")+'</td>'+
-               '<td class="actions" data-label="Azioni">'+
-                 '<button class="btn ghost" onclick="window._advance(\''+o.id+'\',\''+(o.status||"in_attesa")+'\')">Avanza</button> '+
+               '<td class="actions" data-label="Azioni">'+ btn +' '+
                  '<button class="btn danger" onclick="window._remove(\''+o.id+'\')">Elimina</button>'+
                '</td>'+
              '</tr>';
     }).join("");
-
     $("ordersLive").innerHTML = '<table><thead><tr><th>Ora</th><th>Tavolo</th><th>Cameriere</th><th>Dettagli</th><th>Totale</th><th>Stato</th><th>Azioni</th></tr></thead><tbody>'+rows+'</tbody></table>';
   }
 
-  // ---- Registro / Incassi ----
-  var _modalScope = "current"; // current | all
-  function filterForModal(all){
-    var includeDeleted = $("includeDeleted").checked;
-    var arr = all.slice();
-    if(_modalScope==="current"){
-      arr = arr.filter(function(o){
-        var d = o.day || ymd(tsToDate(o.createdAt));
-        return d === CURRENT_DAY;
-      });
-    }
-    if(!includeDeleted){ arr = arr.filter(function(o){ return !o.deleted; }); }
-    arr.sort(function(a,b){
-      var ax = (a.createdAt && a.createdAt.seconds) ? a.createdAt.seconds : 0;
-      var bx = (b.createdAt && b.createdAt.seconds) ? b.createdAt.seconds : 0;
-      return bx-ax;
-    });
-    return arr;
-  }
-  function renderTotals(all){
-    var view = filterForModal(all);
-    var tot = 0, count = view.length, countDel = 0;
-    view.forEach(function(o){ tot+=Number(o.total||0); if(o.deleted) countDel++; });
-    $("totalsSummary").innerHTML =
-      "<span style='background:#fff8d6;border:1px solid #d9e8c6;border-radius:999px;padding:6px 10px'><b>Ambito:</b> "+(_modalScope==="current"?"Giornata "+CURRENT_DAY:"Tutte")+"</span> "+
-      "<span style='background:#fff8d6;border:1px solid #d9e8c6;border-radius:999px;padding:6px 10px'><b>Ordini:</b> "+count+"</span> "+
-      "<span style='background:#fff8d6;border:1px solid #d9e8c6;border-radius:999px;padding:6px 10px'><b>Eliminati:</b> "+countDel+"</span> "+
-      "<span style='background:#fff8d6;border:1px solid #d9e8c6;border-radius:999px;padding:6px 10px'><b>Incasso:</b> "+tot.toFixed(2)+"€</span>";
-
-    var rows = view.map(function(o){
-      var items = (o.items||[]).map(function(i){ return i.qty+"× "+i.name; }).join(", ");
-      return "<div class='row "+(o.deleted?"deleted":"")+"' style='justify-content:space-between;border-bottom:1px dashed #d9e8c6;padding:8px 0'>"+
-               "<div><div><b>"+fmtHHMM(o.createdAt)+"</b> • Tav. "+(o.table||"")+" • "+(o.waiter||"")+"</div>"+
-               "<div style='color:#58734a'>"+items+"</div></div>"+
-               "<div><b>"+Number(o.total||0).toFixed(2)+"€</b>"+(o.deleted?" <span style='color:#58734a'>(eliminato)</span>":"")+"</div>"+
-             "</div>";
-    }).join("");
-    $("totalsList").innerHTML = rows || "<div style='color:#58734a'>Nessun ordine trovato.</div>";
-  }
-  function buildCsvRows(orders){
-    function esc(s){ s = (s==null?"":String(s)); return '"'+s.replace(/"/g,'""')+'"'; }
-    var header = ["datetime","day","table","waiter","total","status","deleted","items"];
-    var lines = [header.map(esc).join(",")];
-    for(var i=0;i<orders.length;i++){
-      var o=orders[i];
-      var items=(o.items||[]).map(function(i){return i.qty+"x "+i.name;}).join(" | ");
-      var row = [ ymdhm(o.createdAt), o.day || ymd(tsToDate(o.createdAt)), o.table||"", o.waiter||"", Number(o.total||0).toFixed(2), o.status||"", o.deleted?"true":"false", items ].map(esc).join(",");
-      lines.push(row);
-    }
-    return lines.join("\n");
-  }
-  function exportCsvFrom(all){
-    var view = filterForModal(all);
-    var csv = "\ufeff" + buildCsvRows(view);
-    var blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement("a");
-    var now = new Date();
-    a.href = url;
-    a.download = "incassi_ok25_"+(_modalScope==="current" ? ("giornata_"+CURRENT_DAY) : "tutte")+"_"+now.getFullYear()+"-"+pad(now.getMonth()+1)+"-"+pad(now.getDate())+".csv";
-    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-  }
-
-  // ---- Azioni mass ----
-  async function svuotaGiornata(){
-    if(!confirm("Confermi di voler archiviare TUTTI gli ordini della giornata "+CURRENT_DAY+"?")) return;
-    // seconda conferma avviene con conteggio
-    var snap = await getDocs(query(collection(db,"orders"), where("eventCode","==",EVENT_CODE)));
-    var toArc = []; snap.forEach(function(d){ var v=d.data(); var dday = v.day || ymd(tsToDate(v.createdAt)); if(dday===CURRENT_DAY) toArc.push({ref:d.ref}); });
-    if(!toArc.length){ alert("Nessun ordine da archiviare."); return; }
-    if(!confirm("Seconda conferma: verranno archiviati "+toArc.length+" ordini.")) return;
-    var batch = writeBatch(db);
-    toArc.forEach(function(x){ batch.update(x.ref, { deleted:true, status:"eliminato", deletedAt: serverTimestamp() }); });
-    await batch.commit();
-    alert("Giornata archiviata");
-  }
-  async function hardWipeEvento(){
-    if(!confirm("⚠️ ATTENZIONE: elimina DEFINITIVAMENTE tutti gli ordini dell'evento ok25?")) return;
-    if(!confirm("Seconda conferma: i dati NON saranno recuperabili.")) return;
-    var parola = prompt("Terza conferma: scrivi OK25 per confermare.");
-    if(!parola || parola.toUpperCase()!=="OK25"){ alert("Operazione annullata."); return; }
-    var snap = await getDocs(query(collection(db,"orders"), where("eventCode","==",EVENT_CODE)));
-    var batch = writeBatch(db);
-    snap.forEach(function(d){ batch.delete(d.ref); });
-    await batch.commit();
-    alert("Storico evento ELIMINATO.");
-  }
-
-  // ---- Firestore stream ----
   const qEv = query(collection(db,"orders"), where("eventCode","==",EVENT_CODE));
-  onSnapshot(qEv, function(snap){
-    var arr = []; snap.forEach(function(d){ var v=d.data(); v.id=d.id; arr.push(v); });
-    arr.sort(function(a,b){
-      var ax = (a.createdAt && a.createdAt.seconds) ? a.createdAt.seconds : 0;
-      var bx = (b.createdAt && b.createdAt.seconds) ? b.createdAt.seconds : 0;
-      return bx-ax;
-    });
-    renderOrdini(arr);
-    window.__ALL_ORDERS = arr;
-  });
+  onSnapshot(qEv, function(snap){ var a=[]; snap.forEach(function(d){ var v=d.data(); v.id=d.id; a.push(v); }); a.sort(function(x,y){ var ax=(x.createdAt&&x.createdAt.seconds)||0; var ay=(y.createdAt&&y.createdAt.seconds)||0; return ay-ax; }); renderOrdini(a); });
 
-  // ---- Listeners ----
-  $("addOrderBtn").addEventListener("click", salvaOrdine);
-  $("totalsBtn").addEventListener("click", async function(){
-    // carica snapshot
-    var snap = await getDocs(qEv); var all = []; snap.forEach(function(d){ var v=d.data(); v.id=d.id; all.push(v); });
-    window.__ALL_ORDERS = all;
-    renderTotals(all);
-    document.getElementById("totalsModal").style.display="flex";
-  });
-  $("closeTotals").addEventListener("click", function(){ document.getElementById("totalsModal").style.display="none"; });
-  $("closeTotals2").addEventListener("click", function(){ document.getElementById("totalsModal").style.display="none"; });
-  $("includeDeleted").addEventListener("change", function(){ if(window.__ALL_ORDERS) renderTotals(window.__ALL_ORDERS); });
-  $("scopeCurrent").addEventListener("click", function(){ _modalScope="current"; if(window.__ALL_ORDERS) renderTotals(window.__ALL_ORDERS); });
-  $("scopeAll").addEventListener("click", function(){ _modalScope="all"; if(window.__ALL_ORDERS) renderTotals(window.__ALL_ORDERS); });
-  $("exportCsv").addEventListener("click", function(){ if(window.__ALL_ORDERS) exportCsvFrom(window.__ALL_ORDERS); });
-  $("clearDayBtn").addEventListener("click", svuotaGiornata);
-  $("hardWipeBtn").addEventListener("click", hardWipeEvento);
+  // Totali
+  var _modalScope="current";
+  function filterForModal(all){ var includeDeleted=$("includeDeleted").checked; var arr=all.slice(); if(_modalScope==="current"){ arr=arr.filter(function(o){ var d=o.day||ymd(tsToDate(o.createdAt)); return d===CURRENT_DAY; }); } if(!includeDeleted){ arr=arr.filter(function(o){ return !o.deleted; }); } arr.sort(function(a,b){ var ax=(a.createdAt&&a.createdAt.seconds)||0; var bx=(b.createdAt&&b.createdAt.seconds)||0; return bx-ax; }); return arr; }
+  function renderTotals(all){ var view=filterForModal(all); var tot=0,cnt=view.length,cDel=0; for(var i=0;i<view.length;i++){ var o=view[i]; tot+=Number(o.total||0); if(o.deleted) cDel++; } document.getElementById("totalsSummary").innerHTML=["<span style='background:#fff8d6;border:1px solid #d9e8c6;border-radius:999px;padding:6px 10px'><b>Ambito:</b> "+(_modalScope==="current"?"Giornata "+CURRENT_DAY:"Tutte")+"</span>","<span style='background:#fff8d6;border:1px solid #d9e8c6;border-radius:999px;padding:6px 10px'><b>Ordini:</b> "+cnt+"</span>","<span style='background:#fff8d6;border:1px solid #d9e8c6;border-radius:999px;padding:6px 10px'><b>Eliminati:</b> "+cDel+"</span>","<span style='background:#fff8d6;border:1px solid #d9e8c6;border-radius:999px;padding:6px 10px'><b>Incasso:</b> "+tot.toFixed(2)+"€</span>"].join(" "); var rows=view.map(function(o){ var items=(o.items||[]).map(function(i){return i.qty+"× "+i.name;}).join(", "); return "<div class='row "+(o.deleted?"deleted":"")+"' style='justify-content:space-between;border-bottom:1px dashed #d9e8c6;padding:8px 0'><div><div><b>"+fmtHHMM(o.createdAt)+"</b> • Tav. "+(o.table||"")+" • "+(o.waiter||"")+"</div><div style='color:#58734a'>"+items+"</div></div><div><b>"+Number(o.total||0).toFixed(2)+"€</b>"+(o.deleted?" <span style='color:#58734a'>(eliminato)</span>":"")+"</div></div>"; }).join(""); document.getElementById("totalsList").innerHTML = rows || "<div style='color:#58734a'>Nessun ordine trovato.</div>"; }
+  async function exportCsv(){ var snap = await getDocs(qEv); var all=[]; snap.forEach(function(d){ var v=d.data(); v.id=d.id; all.push(v); }); var view=filterForModal(all); var csv="\ufeff"+(function buildCsvRows(orders){ function esc(s){ s=(s==null?"":String(s)); return '"'+s.replace(/"/g,'""')+'"'; } var header=["datetime","day","table","waiter","total","status","deleted","items"]; var lines=[header.map(esc).join(",")]; for(var i=0;i<orders.length;i++){ var o=orders[i]; var items=(o.items||[]).map(function(i){return i.qty+"x "+i.name;}).join(" | "); var row=[ ymdhm(o.createdAt), o.day || ymd(tsToDate(o.createdAt)), o.table||"", o.waiter||"", Number(o.total||0).toFixed(2), o.status||"", o.deleted?"true":"false", items ].map(esc).join(","); lines.push(row);} return lines.join("\n"); })(view); var blob=new Blob([csv],{type:"text/csv;charset=utf-8;"}); var url=URL.createObjectURL(blob); var a=document.createElement("a"); var now=new Date(); a.href=url; a.download="incassi_ok25_"+(_modalScope==="current"?("giornata_"+CURRENT_DAY):"tutte")+"_"+now.getFullYear()+"-"+pad(now.getMonth()+1)+"-"+pad(now.getDate())+".csv"; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
 
-  // ---- Init ----
+  async function svuotaGiornata(){ if(!confirm("Confermi archiviazione della giornata "+CURRENT_DAY+"?")) return; var snap=await getDocs(qEv); var toArc=[]; snap.forEach(function(d){ var v=d.data(); var day=v.day || ymd(tsToDate(v.createdAt)); if(day===CURRENT_DAY) toArc.push(d.ref); }); if(!toArc.length){ alert("Nessun ordine da archiviare."); return; } if(!confirm("Seconda conferma: "+toArc.length+" ordini.")) return; var batch=writeBatch(db); for(var i=0;i<toArc.length;i++){ batch.update(toArc[i], {deleted:true,status:"eliminato",deletedAt:serverTimestamp()}); } await batch.commit(); alert("Giornata archiviata"); }
+  async function hardWipeEvento(){ if(!confirm("⚠️ Elimina DEFINITIVAMENTE tutti gli ordini ok25?")) return; if(!confirm("Seconda conferma: i dati NON saranno recuperabili.")) return; var parola=prompt("Terza conferma: scrivi OK25"); if(!parola || parola.toUpperCase()!=="OK25"){ alert("Annullato"); return; } var snap=await getDocs(qEv); var batch=writeBatch(db); snap.forEach(function(d){ batch.delete(d.ref); }); await batch.commit(); alert("Storico evento eliminato"); }
+
+  document.getElementById("addOrderBtn").addEventListener("click", salvaOrdine);
+  document.getElementById("totalsBtn").addEventListener("click", async function(){ var snap=await getDocs(qEv); var all=[]; snap.forEach(function(d){ var v=d.data(); v.id=d.id; all.push(v); }); renderTotals(all); document.getElementById("totalsModal").style.display="flex"; });
+  document.getElementById("closeTotals").addEventListener("click", function(){ document.getElementById("totalsModal").style.display="none"; });
+  document.getElementById("closeTotals2").addEventListener("click", function(){ document.getElementById("totalsModal").style.display="none"; });
+  document.getElementById("includeDeleted").addEventListener("change", function(){ if(window.__ALL_ORDERS) renderTotals(window.__ALL_ORDERS); });
+  document.getElementById("scopeCurrent").addEventListener("click", function(){ _modalScope="current"; if(window.__ALL_ORDERS) renderTotals(window.__ALL_ORDERS); });
+  document.getElementById("scopeAll").addEventListener("click", function(){ _modalScope="all"; if(window.__ALL_ORDERS) renderTotals(window.__ALL_ORDERS); });
+  document.getElementById("exportCsv").addEventListener("click", exportCsv);
+  document.getElementById("clearDayBtn").addEventListener("click", svuotaGiornata);
+  document.getElementById("hardWipeBtn").addEventListener("click", hardWipeEvento);
+
   renderMenu(); calcTotal(); restoreWaiter();
   window._advance = avanzaStato; window._remove = eliminaOrdine;
 </script>
