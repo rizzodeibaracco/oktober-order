@@ -1,7 +1,7 @@
 
 <!doctype html><html lang="it"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ordini – ok25</title>
+<title>Ordini – ok25 (FULL compat)</title>
 <style>
 :root{--bg:#10170f;--card:#162216;--text:#eaf6e5;--muted:#9fc19a;--border:#274427;--ok:#00c853;--wait:#ff5252}
 *{box-sizing:border-box}html,body{max-width:100%;overflow-x:hidden}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
@@ -34,18 +34,63 @@
   "messagingSenderId": "836780488125",
   "appId": "1:836780488125:web:a5d99be814b773c7f78ed4"
 };
-    const EVENT_CODE="ok25"; const app=initializeApp(firebaseConfig); const db=getFirestore(app);
-    const $=s=>document.querySelector(s); const pad=n=>String(n).padStart(2,"0"); const ymd=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
-    const hhmm=ts=>{try{const d=ts?.toDate?ts.toDate():new Date();return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}catch{return "-";}};
+    function hasToDate(x){ return x && typeof x.toDate === "function"; }
+    function tsToDate(ts){ return hasToDate(ts) ? ts.toDate() : new Date(); }
+    function fmtHHMM(ts){ var d=tsToDate(ts); return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }
+    function pad(n){ n=String(n); return n.length<2? "0"+n : n; }
+    function ymd(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
 
-    let CURRENT_DAY=localStorage.getItem("ok25_current_day")||ymd(new Date()); $("#dayInput").value=CURRENT_DAY;
-    $("#dayInput").addEventListener("change",e=>{CURRENT_DAY=e.target.value;localStorage.setItem("ok25_current_day",CURRENT_DAY);render(_cache);});
-    $("#onlyOpen").addEventListener("change",()=>render(_cache));
-    function badge(o){ if(o.status==="in_attesa") return '<span class="state"><span class="dot red"></span><span>In attesa</span></span>'; if(o.status==="pronto") return '<span class="state"><span class="dot green"></span><span>Pronto</span></span>'; return ''; }
-    function isBlink(o){ return o.status==="in_attesa"||o.status==="pronto"; }
-    function orderRow(o){ const items=(o.items||[]).map(i=>i.qty+"× "+i.name).join(", "); const time=hhmm(o.createdAt); const show=(o.day||"")===CURRENT_DAY; if(!show) return ""; const onlyOpen=$("#onlyOpen").checked; if(onlyOpen&&(o.status==="consegnato"||o.deleted)) return ""; const cls=isBlink(o)?"order blink":"order"; const st=badge(o); return `<div class="${cls}"><div><div class="tableBig">Tavolo ${o.table||""}</div><div class="meta">${time} • ${o.waiter||""}</div><div class="details">${items}</div></div><div style="text-align:right"><div class="details" style="font-weight:900">${Number(o.total||0).toFixed(2)}€</div><div style="margin-top:8px">${st}</div><div class="actions" style="margin-top:8px"><button class="btn" onclick="window._advance('${o.id}','${o.status||"in_attesa"}')">Avanza</button></div></div></div>`; }
-    let _cache=[]; function render(arr){ _cache=arr; const html=arr.map(orderRow).join("") || "<div style='opacity:.7;padding:20px'>Nessun ordine per la giornata selezionata.</div>"; $("#list").innerHTML=html; }
-    const qEv=query(collection(db,"orders"), where("eventCode","==","ok25")); onSnapshot(qEv, snap=>{ const a=snap.docs.map(d=>({id:d.id,...d.data()})); a.sort((x,y)=>(y.createdAt?.seconds||0)-(x.createdAt?.seconds||0)); render(a); });
-    const STATI=["in_attesa","pronto","consegnato","eliminato"]; window._advance=async(id,s)=>{const next=STATI[(STATI.indexOf(s)+1)%STATI.length]; await updateDoc(doc(db,"orders",id), {status:next});};
+    const EVENT_CODE="ok25"; const app=initializeApp(firebaseConfig); const db=getFirestore(app);
+    const $=s=>document.querySelector(s);
+    let CURRENT_DAY = (localStorage.getItem("ok25_current_day") || ymd(new Date()));
+    $("#dayInput").value = CURRENT_DAY;
+    $("#dayInput").addEventListener("change", e => { CURRENT_DAY=e.target.value; localStorage.setItem("ok25_current_day", CURRENT_DAY); render(_cache); });
+    $("#onlyOpen").addEventListener("change", ()=> render(_cache));
+
+    function badge(o){
+      if (o.status === "in_attesa") return '<span class="state"><span class="dot red"></span><span>In attesa</span></span>';
+      if (o.status === "pronto")     return '<span class="state"><span class="dot green"></span><span>Pronto</span></span>';
+      return '';
+    }
+    function isBlink(o){ return o.status === "in_attesa" || o.status === "pronto"; }
+
+    function orderRow(o){
+      const items = (o.items||[]).map(i => i.qty + "× " + i.name).join(", ");
+      const time  = fmtHHMM(o.createdAt);
+      const show  = (o.day || "") === CURRENT_DAY;
+      if (!show) return "";
+      const onlyOpen = $("#onlyOpen").checked;
+      if (onlyOpen && (o.status==="consegnato" || o.deleted)) return "";
+      const cls = isBlink(o) ? "order blink" : "order";
+      const stateHtml = badge(o);
+
+      return `<div class="${cls}">
+        <div>
+          <div class="tableBig">Tavolo ${o.table||""}</div>
+          <div class="meta">${time} • ${o.waiter||""}</div>
+          <div class="details">${items}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="details" style="font-weight:900">${Number(o.total||0).toFixed(2)}€</div>
+          <div style="margin-top:8px">${stateHtml}</div>
+          <div class="actions" style="margin-top:8px">
+            <button class="btn" onclick="window._advance('${o.id}','${o.status||"in_attesa"}')">Avanza</button>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    let _cache = [];
+    function render(arr){
+      _cache = arr;
+      const html = arr.map(orderRow).join("") || "<div style='opacity:.7;padding:20px'>Nessun ordine per la giornata selezionata.</div>";
+      $("#list").innerHTML = html;
+    }
+
+    const qEv = query(collection(db,"orders"), where("eventCode","==","ok25"));
+    onSnapshot(qEv, snap => { const a = snap.docs.map(d=>({ id:d.id, ...d.data() })); a.sort((x,y)=>(y.createdAt?.seconds||0)-(x.createdAt?.seconds||0)); render(a); });
+
+    const STATI=["in_attesa","pronto","consegnato","eliminato"];
+    window._advance = async (id, s) => { const next = STATI[(STATI.indexOf(s)+1)%STATI.length]; await updateDoc(doc(db,"orders",id), { status: next }); };
   </script>
 </body></html>
